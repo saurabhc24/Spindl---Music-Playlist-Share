@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spindl
 
-## Getting Started
+**Everything you've got spinning.** A shareable shelf for your music playlists —
+connect Spotify and YouTube, pick what you want to show, and share it all from
+one link (`spindl.app/yourname`).
 
-First, run the development server:
+Built with Next.js 16 (App Router) + TypeScript, Prisma 7 + Postgres, and
+Auth.js v5. Deploys to Vercel.
+
+---
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install                  # also runs `prisma generate` via postinstall
+cp .env.example .env         # then fill in the values (see below)
+npx prisma dev --detach      # local Postgres, or point DATABASE_URL at Neon
+npm run db:migrate           # apply the schema
+npm run db:seed              # optional: demo profile at /demo
+npm run dev                  # http://127.0.0.1:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> Use `127.0.0.1`, not `localhost` — Spotify rejects `localhost` redirect URIs.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Minimum env to boot
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`AUTH_SECRET` (`npx auth secret`), `TOKEN_ENCRYPTION_KEY`
+(`openssl rand -base64 32`), and `DATABASE_URL` / `DIRECT_URL`. Provider
+credentials are only needed for the features that use them — the Connections
+page shows a "not configured" state until they're set. See `.env.example` for
+where to obtain each value.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Dev server |
+| `npm run build` | Production build (typechecks) |
+| `npm run lint` | ESLint |
+| `npm run check` | Logic checks — crypto, sync engine, YouTube provider |
+| `npm run db:migrate` | `prisma migrate dev` |
+| `npm run db:seed` | Seed a demo profile |
+| `npm run db:studio` | Prisma Studio |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`npm run check:sync` needs a running database; the other checks don't.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How it's put together
 
-## Deploy on Vercel
+```
+app/[username]/       public profile page + OG image
+app/dashboard/        connections, playlist curation, settings
+app/api/connect/      OAuth start + callback (per provider)
+app/api/sync/         pull playlists from a connected provider
+lib/providers/        one module per music service
+lib/sync.ts           reconciles fetched playlists into the DB
+lib/crypto.ts         AES-256-GCM for stored OAuth tokens
+proxy.ts              optimistic auth gate (Next 16's renamed middleware)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Notable decisions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **App login and music connections are separate OAuth systems.** Auth.js
+  handles sign-in only; Spotify/YouTube connections are hand-rolled and stored
+  in `ConnectedAccount` with encrypted tokens. This keeps login scopes minimal
+  and lets a music account be revoked without affecting sign-in.
+- **Google's OAuth client is reused for both** login and YouTube-connect, with
+  different redirect URIs and scopes — one client to manage instead of two.
+- **Sync never destroys curation.** `visible` and `sortOrder` are set only when a
+  playlist is first seen. Playlists that vanish upstream are flagged stale, not
+  deleted, so a curated order never silently changes.
+- **New imports default to hidden**, so connecting an account doesn't dump a
+  hundred playlists onto your public page.
+- **Tokens are encrypted at rest** (AES-256-GCM) rather than stored in plaintext.
+- **`@prisma/adapter-pg` over the Neon serverless driver**, so the same code path
+  works against local Postgres and Neon.
+
+### On "YouTube" vs "YouTube Music"
+
+There is no official YouTube Music API. Spindl reads your playlists through the
+YouTube Data API v3, which is where YouTube Music playlists live underneath — so
+the UI says "YouTube playlists" rather than claiming YouTube Music support.
+
+Note that `youtube.readonly` is a *sensitive* scope: until Google verifies the
+app, the consent screen shows an "unverified app" warning and is capped at 100
+test users.
+
+## Deploying
+
+Push to `main`, import the repo on Vercel, then set every variable from
+`.env.example` in the project settings. Point `DATABASE_URL` at Neon's **pooled**
+connection string and `DIRECT_URL` at the unpooled one. Add the production
+callback URLs to each provider's console alongside the local ones.

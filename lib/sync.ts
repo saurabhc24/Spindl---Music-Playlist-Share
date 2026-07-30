@@ -1,0 +1,190 @@
+import "server-only";
+
+import type { ConnectedAccount } from "@/app/generated/prisma/client";
+
+import { decryptNullable, encryptNullable } from "@/lib/crypto";
+import { prisma } from "@/lib/prisma";
+import { PROVIDERS, ProviderAuthError } from "@/lib/providers";
+
+// Refresh slightly early so a long fetch can't start with a token that expires
+// mid-flight.
+const EXPIRY_SKEW_MS = 60_000;
+// sortOrder uses wide gaps so a drag-reorder usually rewrites one row, not all.
+const SORT_ORDER_STEP = 1000;
+
+export class SyncError extends Error {
+  constructor(
+    message: string,
+    readonly needsReconnect = false
+  ) {
+    super(message);
+    this.name = "SyncError";
+  }
+}
+
+/**
+ * Returns a usable access token for the connection, refreshing and persisting a
+ * new one first if the stored token is expired or about to be.
+ */
+async function getFreshAccessToken(connection: ConnectedAccount) {
+  const accessToken = decryptNullable(connection.accessTokenEncrypted);
+  const refreshToken = decryptNullable(connection.refreshTokenEncrypted);
+
+  const isExpired =
+    connection.expiresAt !== null &&
+    connection.expiresAt.getTime() - EXPIRY_SKEW_MS <= Date.now();
+
+  if (accessToken && !isExpired) return accessToken;
+
+  if (!refreshToken) {
+    throw new SyncError(
+      "This connection has no refresh token. Please reconnect the account.",
+      true
+    );
+  }
+
+  try {
+    const tokens =
+      await PROVIDERS[connection.provider].refreshAccessToken(refreshToken);
+
+    await prisma.connectedAccount.update({
+      where: { id: connection.id },
+      data: {
+        accessTokenEncrypted: encryptNullable(tokens.accessToken),
+        ...(tokens.refreshToken
+          ? { refreshTokenEncrypted: encryptNullable(tokens.refreshToken) }
+          : {}),
+        expiresAt: tokens.expiresAt,
+        ...(tokens.scope ? { scope: tokens.scope } : {}),
+      },
+    });
+
+    return tokens.accessToken;
+  } catch (error) {
+    if (error instanceof ProviderAuthError) {
+      throw new SyncError(
+        "The connection was revoked or expired. Please reconnect the account.",
+        true
+      );
+    }
+    throw error;
+  }
+}
+
+export type SyncResult = {
+  imported: number;
+  added: number;
+  markedStale: number;
+};
+
+/**
+ * Pulls the latest playlists for one connection and reconciles them into the DB.
+ *
+ * Curation is preserved across syncs: `visible` and `sortOrder` are only set when
+ * a playlist is first seen. Playlists that disappear upstream are flagged stale
+ * rather than deleted, so a user never silently loses a curated ordering.
+ */
+export async function syncProvider({
+  userId,
+  connection,
+}: {
+  userId: string;
+  connection: ConnectedAccount;
+}): Promise<SyncResult> {
+  try {
+    const accessToken = await getFreshAccessToken(connection);
+    const fetched =
+      await PROVIDERS[connection.provider].fetchPlaylists(accessToken);
+
+    const existing = await prisma.playlist.findMany({
+      where: { userId, provider: connection.provider },
+      select: { externalId: true },
+    });
+    const existingIds = new Set(existing.map((row) => row.externalId));
+
+    // Ordering is unified across providers, so new rows go after everything the
+    // user already has, regardless of which service they came from.
+    const highest = await prisma.playlist.aggregate({
+      where: { userId },
+      _max: { sortOrder: true },
+    });
+    let nextSortOrder = highest._max.sortOrder ?? 0;
+
+    let added = 0;
+    const now = new Date();
+
+    for (const playlist of fetched) {
+      const isNew = !existingIds.has(playlist.externalId);
+      if (isNew) added++;
+
+      await prisma.playlist.upsert({
+        where: {
+          userId_provider_externalId: {
+            userId,
+            provider: connection.provider,
+            externalId: playlist.externalId,
+          },
+        },
+        create: {
+          userId,
+          connectedAccountId: connection.id,
+          provider: connection.provider,
+          externalId: playlist.externalId,
+          title: playlist.title,
+          description: playlist.description,
+          coverImageUrl: playlist.coverImageUrl,
+          externalUrl: playlist.externalUrl,
+          trackCount: playlist.trackCount,
+          // New imports start hidden so connecting an account never dumps a
+          // hundred playlists onto someone's public page unannounced.
+          visible: false,
+          sortOrder: (nextSortOrder += SORT_ORDER_STEP),
+          lastSyncedAt: now,
+        },
+        update: {
+          // Metadata refreshes; curation (visible/sortOrder) intentionally does not.
+          connectedAccountId: connection.id,
+          title: playlist.title,
+          description: playlist.description,
+          coverImageUrl: playlist.coverImageUrl,
+          externalUrl: playlist.externalUrl,
+          trackCount: playlist.trackCount,
+          isStale: false,
+          lastSyncedAt: now,
+        },
+      });
+    }
+
+    // Anything we previously knew about but didn't see this time is flagged, not
+    // deleted. If the provider returned nothing at all, that's every row.
+    const fetchedIds = fetched.map((playlist) => playlist.externalId);
+    const { count: markedStale } = await prisma.playlist.updateMany({
+      where: {
+        userId,
+        provider: connection.provider,
+        isStale: false,
+        ...(fetchedIds.length > 0
+          ? { externalId: { notIn: fetchedIds } }
+          : {}),
+      },
+      data: { isStale: true },
+    });
+
+    await prisma.connectedAccount.update({
+      where: { id: connection.id },
+      data: { lastSyncedAt: now, lastSyncStatus: "ok" },
+    });
+
+    return { imported: fetched.length, added, markedStale };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown sync failure";
+
+    await prisma.connectedAccount.update({
+      where: { id: connection.id },
+      data: { lastSyncStatus: `error: ${message}`.slice(0, 500) },
+    });
+
+    throw error;
+  }
+}

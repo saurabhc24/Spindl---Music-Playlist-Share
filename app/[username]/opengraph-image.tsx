@@ -1,0 +1,91 @@
+import { ImageResponse } from "next/og";
+
+import { getPublicProfile } from "@/lib/profile";
+
+export const alt = "Playlists shared on Spindl";
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+// Next 16 passes `params` to image generators as a Promise.
+export default async function OpengraphImage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
+  const data = await getPublicProfile(username);
+
+  const displayName = data?.profile.displayName || data?.profile.username || username;
+  const covers = (data?.playlists ?? [])
+    .map((playlist) => playlist.coverImageUrl)
+    .filter((url): url is string => Boolean(url))
+    .slice(0, 4);
+  const playlistCount = data?.playlists.length ?? 0;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          background: "#09090b",
+          color: "#fafafa",
+          padding: 72,
+          fontFamily: "sans-serif",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", fontSize: 26, color: "#a1a1aa" }}>
+            @{data?.profile.username ?? username}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 68,
+              fontWeight: 600,
+              marginTop: 12,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {displayName}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 30,
+              color: "#a1a1aa",
+              marginTop: 16,
+            }}
+          >
+            {playlistCount > 0
+              ? `${playlistCount} playlist${playlistCount === 1 ? "" : "s"} on Spotify & YouTube`
+              : "Playlists on Spotify & YouTube"}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 20 }}>
+            {covers.map((cover) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={cover}
+                src={cover}
+                alt=""
+                width={160}
+                height={160}
+                style={{ borderRadius: 16, objectFit: "cover" }}
+              />
+            ))}
+          </div>
+          <div style={{ display: "flex", fontSize: 24, color: "#71717a" }}>
+            Spindl
+          </div>
+        </div>
+      </div>
+    ),
+    size
+  );
+}

@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but the template is safe and documents every variable the app needs.
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +41,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma Client is generated from schema.prisma at install time (see postinstall).
+/app/generated/prisma
+
+# Agent skill docs installed by `prisma init` -- regenerable, not app code.
+/.claude/skills
+/.agents/skills
+/.windsurf/skills
+skills-lock.json

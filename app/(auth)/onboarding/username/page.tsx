@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { displayUrl } from "@/lib/app-url";
 import { requireUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 
@@ -14,9 +15,7 @@ export default async function ClaimUsernamePage() {
   });
   if (profile) redirect("/dashboard");
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "")
-    .replace(/^https?:\/\//, "")
-    .replace(/\/$/, "");
+  const appUrl = displayUrl();
 
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">

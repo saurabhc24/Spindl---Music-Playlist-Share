@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { displayUrl } from "@/lib/app-url";
 import { requireProfile } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 
@@ -12,7 +13,7 @@ export default async function DashboardPage() {
     prisma.playlist.count({ where: { userId: profile.userId, visible: true } }),
   ]);
 
-  const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${profile.username}`;
+  const publicUrl = displayUrl(`/${profile.usernameNormalized}`);
 
   return (
     <div className="space-y-10">
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
             href={`/${profile.username}`}
             className="font-medium text-foreground underline underline-offset-4"
           >
-            {publicUrl.replace(/^https?:\/\//, "")}
+            {publicUrl}
           </Link>
         </p>
       </section>

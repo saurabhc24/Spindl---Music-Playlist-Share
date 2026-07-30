@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { absoluteUrl } from "@/lib/app-url";
 import { requireUser } from "@/lib/dal";
 import { encryptNullable } from "@/lib/crypto";
 import { verifyOAuthState } from "@/lib/oauth-state";
@@ -8,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { syncProvider } from "@/lib/sync";
 
 function connectionsUrl(params: Record<string, string>) {
-  const url = new URL("/dashboard/connections", process.env.NEXT_PUBLIC_APP_URL);
+  const url = new URL(absoluteUrl("/dashboard/connections"));
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }

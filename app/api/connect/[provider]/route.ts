@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { absoluteUrl } from "@/lib/app-url";
 import { requireUser } from "@/lib/dal";
 import { clientIp, rateLimitedResponse } from "@/lib/http";
 import { createOAuthState } from "@/lib/oauth-state";
@@ -26,9 +27,8 @@ export async function GET(
 
   if (!isProviderConfigured(provider)) {
     return NextResponse.redirect(
-      new URL(
-        `/dashboard/connections?error=not_configured&provider=${slug}`,
-        process.env.NEXT_PUBLIC_APP_URL
+      absoluteUrl(
+        `/dashboard/connections?error=not_configured&provider=${slug}`
       )
     );
   }

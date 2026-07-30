@@ -157,6 +157,38 @@ check(
   clientIp(new Request("https://example.com")) === "unknown"
 );
 
+// --- app URL normalization --------------------------------------------------
+
+const { appBaseUrl, absoluteUrl, displayUrl } = await import("../lib/app-url");
+
+const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+for (const variant of [
+  "https://spindl-music-playlist-share.vercel.app",
+  "https://spindl-music-playlist-share.vercel.app/",
+  "https://spindl-music-playlist-share.vercel.app///",
+]) {
+  process.env.NEXT_PUBLIC_APP_URL = variant;
+  check(
+    `no double slash for base "${variant.slice(-4)}"`,
+    absoluteUrl("/saurabh") ===
+      "https://spindl-music-playlist-share.vercel.app/saurabh",
+    absoluteUrl("/saurabh")
+  );
+}
+
+process.env.NEXT_PUBLIC_APP_URL = "https://spindl-music-playlist-share.vercel.app/";
+check(
+  "displayUrl strips the scheme",
+  displayUrl("/saurabh") === "spindl-music-playlist-share.vercel.app/saurabh",
+  displayUrl("/saurabh")
+);
+check(
+  "appBaseUrl drops the trailing slash",
+  appBaseUrl() === "https://spindl-music-playlist-share.vercel.app",
+  appBaseUrl()
+);
+process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+
 console.log(
   failures === 0 ? "\nAll hardening checks passed." : `\n${failures} check(s) FAILED.`
 );

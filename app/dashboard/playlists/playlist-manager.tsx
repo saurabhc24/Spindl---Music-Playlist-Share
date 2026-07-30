@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -32,9 +32,20 @@ export type PlaylistRow = {
   isStale: boolean;
 };
 
+const WRITE_DEBOUNCE_MS = 400;
+
 export function PlaylistManager({ initial }: { initial: PlaylistRow[] }) {
   const [playlists, setPlaylists] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  const pendingWrites = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
+  // Flush nothing on unmount, but don't leave timers running either.
+  useEffect(() => {
+    const timers = pendingWrites.current;
+    return () => {
+      for (const timer of timers.values()) clearTimeout(timer);
+    };
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -77,17 +88,36 @@ export function PlaylistManager({ initial }: { initial: PlaylistRow[] }) {
     );
     setError(null);
 
-    try {
-      const response = await fetch(`/api/playlists/${id}/visibility`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visible }),
-      });
-      if (!response.ok) throw new Error();
-    } catch {
-      setPlaylists(previous);
-      setError("Couldn't update that playlist. Please try again.");
-    }
+    // The switch flips instantly, but the write is debounced: flicking a toggle
+    // back and forth (or racing through a long list) collapses into one request
+    // per playlist instead of one per click.
+    const existing = pendingWrites.current.get(id);
+    if (existing) clearTimeout(existing);
+
+    pendingWrites.current.set(
+      id,
+      setTimeout(async () => {
+        pendingWrites.current.delete(id);
+        try {
+          const response = await fetch(`/api/playlists/${id}/visibility`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ visible }),
+          });
+          if (!response.ok) {
+            const message =
+              response.status === 429
+                ? "You're making changes very quickly. Please wait a moment."
+                : "Couldn't update that playlist. Please try again.";
+            setPlaylists(previous);
+            setError(message);
+          }
+        } catch {
+          setPlaylists(previous);
+          setError("Couldn't update that playlist. Please try again.");
+        }
+      }, WRITE_DEBOUNCE_MS)
+    );
   }
 
   const visibleCount = playlists.filter((row) => row.visible).length;

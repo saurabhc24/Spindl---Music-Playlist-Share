@@ -6,6 +6,18 @@ export const alt = "Playlists shared on Spindl";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Rendering an OG image is expensive (satori layout + PNG encode), and social
+// crawlers hit it in bursts whenever a link is shared. Same ISR setup as the page
+// itself, with a longer window since the image changes far less often than the
+// page: without generateStaticParams this route falls back to `must-revalidate`
+// and re-renders the PNG on every single crawl.
+export const revalidate = 3600;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [];
+}
+
 // Next 16 passes `params` to image generators as a Promise.
 export default async function OpengraphImage({
   params,

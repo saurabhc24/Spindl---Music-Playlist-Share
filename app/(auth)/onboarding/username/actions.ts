@@ -1,9 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { requireUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
+import { RATE_LIMITS, rateLimit } from "@/lib/rate-limit";
 import { usernameSchema } from "@/lib/username";
 
 export type ClaimUsernameState = { error?: string } | undefined;
@@ -13,6 +16,26 @@ export async function claimUsername(
   formData: FormData
 ): Promise<ClaimUsernameState> {
   const user = await requireUser();
+
+  // Per-IP, deliberately: this is the choke point on account farming. Someone
+  // creating throwaway accounts to bypass our per-account limits (or to squat
+  // desirable usernames) has to claim a username each time, and they'll come
+  // from the same handful of IPs.
+  const headerList = await headers();
+  const ip =
+    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headerList.get("x-real-ip")?.trim() ||
+    "unknown";
+
+  const limited = await rateLimit(
+    `claim:ip:${ip}`,
+    RATE_LIMITS.claimUsernamePerIp
+  );
+  if (!limited.ok) {
+    return {
+      error: "Too many attempts from this network. Please try again later.",
+    };
+  }
 
   const parsed = usernameSchema.safeParse(formData.get("username"));
   if (!parsed.success) {
@@ -42,6 +65,11 @@ export async function claimUsername(
     }
     throw error;
   }
+
+  // The public route is ISR-cached, so a visit to this username *before* it was
+  // claimed cached a 404. Without this, that 404 would keep being served from
+  // the edge after the page went live.
+  revalidatePath(`/${username}`);
 
   redirect("/dashboard");
 }

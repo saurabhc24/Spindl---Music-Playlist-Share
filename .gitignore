@@ -45,8 +45,9 @@ next-env.d.ts
 # Prisma Client is generated from schema.prisma at install time (see postinstall).
 /app/generated/prisma
 
-# Agent skill docs installed by `prisma init` -- regenerable, not app code.
-/.claude/skills
-/.agents/skills
-/.windsurf/skills
+# Local agent tooling: skill docs installed by `prisma init` plus per-developer
+# editor/assistant settings. Regenerable and personal, not app code.
+/.claude
+/.agents
+/.windsurf
 skills-lock.json

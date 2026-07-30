@@ -9,6 +9,19 @@ import { ProviderIcon, providerLabel } from "@/components/provider-badge";
 // this route so edits show up immediately rather than waiting this out.
 export const revalidate = 60;
 
+// Required for ISR on a dynamic segment. Without it Next treats this route as
+// fully dynamic and serves `Cache-Control: no-store`, meaning every profile view
+// hits the database -- the opposite of what we want on the highest-traffic page
+// in the app. Returning [] prerenders nothing at build time (we can't know
+// usernames ahead of time); pages are generated on first request and then cached
+// at the edge. Verified via `x-nextjs-cache: HIT` on repeat requests.
+export async function generateStaticParams() {
+  return [];
+}
+
+// Usernames not in the (empty) prerender list must still render on demand.
+export const dynamicParams = true;
+
 export async function generateMetadata(
   props: PageProps<"/[username]">
 ): Promise<Metadata> {

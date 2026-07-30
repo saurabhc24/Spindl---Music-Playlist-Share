@@ -4,7 +4,11 @@ import type { ConnectedAccount } from "@/app/generated/prisma/client";
 
 import { decryptNullable, encryptNullable } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
-import { PROVIDERS, ProviderAuthError } from "@/lib/providers";
+import {
+  PROVIDERS,
+  ProviderAuthError,
+  ProviderRateLimitError,
+} from "@/lib/providers";
 
 // Refresh slightly early so a long fetch can't start with a token that expires
 // mid-flight.
@@ -15,7 +19,8 @@ const SORT_ORDER_STEP = 1000;
 export class SyncError extends Error {
   constructor(
     message: string,
-    readonly needsReconnect = false
+    readonly needsReconnect = false,
+    readonly retryAfterSeconds: number | null = null
   ) {
     super(message);
     this.name = "SyncError";
@@ -93,8 +98,15 @@ export async function syncProvider({
 }): Promise<SyncResult> {
   try {
     const accessToken = await getFreshAccessToken(connection);
-    const fetched =
-      await PROVIDERS[connection.provider].fetchPlaylists(accessToken);
+    let fetched;
+    try {
+      fetched = await PROVIDERS[connection.provider].fetchPlaylists(accessToken);
+    } catch (error) {
+      if (error instanceof ProviderRateLimitError) {
+        throw new SyncError(error.message, false, error.retryAfterSeconds);
+      }
+      throw error;
+    }
 
     const existing = await prisma.playlist.findMany({
       where: { userId, provider: connection.provider },

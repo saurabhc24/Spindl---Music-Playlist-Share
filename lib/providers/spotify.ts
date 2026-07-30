@@ -2,6 +2,8 @@ import "server-only";
 
 import {
   ProviderAuthError,
+  ProviderRateLimitError,
+  parseRetryAfter,
   type NormalizedPlaylist,
   type OAuthTokens,
   type ProviderClient,
@@ -150,6 +152,14 @@ export const spotify: ProviderClient = {
 
       if (response.status === 401) {
         throw new ProviderAuthError("Spotify access token expired.", 401);
+      }
+      if (response.status === 429) {
+        // Spotify's quota is per-application, so continuing to hammer it would
+        // degrade sync for every user. Stop and surface the wait.
+        throw new ProviderRateLimitError(
+          "Spotify is rate-limiting requests. Please try again shortly.",
+          parseRetryAfter(response.headers.get("retry-after"))
+        );
       }
       if (!response.ok) {
         throw new ProviderAuthError(

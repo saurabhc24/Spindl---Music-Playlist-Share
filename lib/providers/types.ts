@@ -36,3 +36,30 @@ export class ProviderAuthError extends Error {
     this.name = "ProviderAuthError";
   }
 }
+
+/**
+ * The provider rate-limited *us*. Spotify and YouTube apply their quotas per
+ * application, not per end user, so one abusive account can exhaust the quota
+ * for everyone -- worth surfacing distinctly rather than as a generic failure.
+ */
+export class ProviderRateLimitError extends Error {
+  constructor(
+    message: string,
+    readonly retryAfterSeconds: number | null = null
+  ) {
+    super(message);
+    this.name = "ProviderRateLimitError";
+  }
+}
+
+/** Parses a Retry-After header, which may be seconds or an HTTP date. */
+export function parseRetryAfter(header: string | null): number | null {
+  if (!header) return null;
+
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return Math.max(0, Math.ceil(seconds));
+
+  const date = Date.parse(header);
+  if (Number.isNaN(date)) return null;
+  return Math.max(0, Math.ceil((date - Date.now()) / 1000));
+}

@@ -37,7 +37,7 @@ where to obtain each value.
 | `npm run dev` | Dev server |
 | `npm run build` | Production build (typechecks) |
 | `npm run lint` | ESLint |
-| `npm run check` | Logic checks — crypto, sync engine, YouTube provider |
+| `npm run check` | Logic checks — crypto, sync engine, YouTube provider, hardening |
 | `npm run db:migrate` | `prisma migrate dev` |
 | `npm run db:seed` | Seed a demo profile |
 | `npm run db:studio` | Prisma Studio |
@@ -73,6 +73,36 @@ proxy.ts              optimistic auth gate (Next 16's renamed middleware)
 - **Tokens are encrypted at rest** (AES-256-GCM) rather than stored in plaintext.
 - **`@prisma/adapter-pg` over the Neon serverless driver**, so the same code path
   works against local Postgres and Neon.
+
+### Handling traffic and abuse
+
+The public profile page is the highest-traffic route, so it's ISR-cached and
+served from the edge — repeat views never reach the database. This requires
+`generateStaticParams` on the dynamic segment: **without it Next serves
+`Cache-Control: no-store` and every view hits the DB.** Verify with
+`x-nextjs-cache: HIT` on a repeat request. The OG image is cached the same way,
+on a longer window, since crawlers hit it in bursts and each render is expensive.
+
+Mutating endpoints are rate-limited **per account and per IP together**
+(`lib/rate-limit.ts`) — an account limit alone is bypassed by making more
+accounts, so username claiming is IP-limited as the choke point on account
+farming. Limits use Upstash Redis when configured and fall back to an in-process
+counter otherwise; **the fallback is per-instance, so production must set
+`UPSTASH_REDIS_REST_URL`/`TOKEN`** for limits to actually hold across serverless
+instances.
+
+Every JSON endpoint caps its request body (`readJsonBody`), counting real bytes
+rather than trusting `Content-Length`. Provider 429s and YouTube quota errors are
+surfaced as `503` with `Retry-After` rather than retried, because those quotas
+are per-application: hammering them degrades sync for every user.
+
+A daily Vercel Cron (`vercel.json` → `/api/cron/cleanup`, guarded by
+`CRON_SECRET`) clears expired sessions and verification tokens, which Auth.js
+writes but never reaps, plus signups older than 30 days that never claimed a
+username. It deliberately does **not** delete established accounts for
+inactivity — that destroys real data and breaks live shared links, so it should
+be a product decision with warning emails, not a silent cron job. Pass
+`?dryRun=1` to see what it would remove.
 
 ### On "YouTube" vs "YouTube Music"
 

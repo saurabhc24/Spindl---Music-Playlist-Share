@@ -2,6 +2,8 @@ import "server-only";
 
 import {
   ProviderAuthError,
+  ProviderRateLimitError,
+  parseRetryAfter,
   type NormalizedPlaylist,
   type OAuthTokens,
   type ProviderClient,
@@ -167,6 +169,21 @@ export const youtube: ProviderClient = {
 
       if (response.status === 401) {
         throw new ProviderAuthError("YouTube access token expired.", 401);
+      }
+      // 403 is how the Data API reports quota exhaustion (quotaExceeded /
+      // rateLimitExceeded), not just permission denial.
+      if (response.status === 429 || response.status === 403) {
+        const body = await response.text();
+        if (response.status === 429 || /quota|rateLimit/i.test(body)) {
+          throw new ProviderRateLimitError(
+            "YouTube's daily quota is exhausted. Please try again later.",
+            parseRetryAfter(response.headers.get("retry-after"))
+          );
+        }
+        throw new ProviderAuthError(
+          `YouTube playlist fetch failed: ${body}`,
+          response.status
+        );
       }
       if (!response.ok) {
         throw new ProviderAuthError(

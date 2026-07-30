@@ -1,0 +1,163 @@
+import "dotenv/config";
+
+// Verifies the abuse-prevention primitives: fixed-window rate limiting (memory
+// backend) and the request body size cap.
+//   npx tsx --conditions=react-server tests/hardening.check.mts
+//
+// Forces the in-memory backend so the test never depends on Upstash.
+delete process.env.UPSTASH_REDIS_REST_URL;
+delete process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const { rateLimit, rateLimitAll, rateLimitBackend } = await import(
+  "../lib/rate-limit"
+);
+const { readJsonBody, PayloadTooLargeError, clientIp } = await import(
+  "../lib/http"
+);
+
+let failures = 0;
+function check(name: string, condition: boolean, detail = "") {
+  if (condition) console.log(`  PASS  ${name}`);
+  else {
+    failures++;
+    console.log(`  FAIL  ${name} ${detail}`);
+  }
+}
+
+async function expectThrow(fn: () => Promise<unknown>, what: string) {
+  try {
+    await fn();
+    return { threw: false, error: null as unknown };
+  } catch (error) {
+    return { threw: true, error };
+  } finally {
+    void what;
+  }
+}
+
+function jsonRequest(body: string, headers: Record<string, string> = {}) {
+  return new Request("https://example.com/api/test", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body,
+  });
+}
+
+// --- rate limiting -----------------------------------------------------------
+
+check("uses the memory backend when Upstash is unset", rateLimitBackend() === "memory");
+
+const rule = { limit: 3, windowSeconds: 60 };
+const key = `test:${Date.now()}:a`;
+
+const first = await rateLimit(key, rule);
+check("first request is allowed", first.ok && first.remaining === 2, JSON.stringify(first));
+
+await rateLimit(key, rule);
+const third = await rateLimit(key, rule);
+check("request at the limit is still allowed", third.ok && third.remaining === 0, JSON.stringify(third));
+
+const fourth = await rateLimit(key, rule);
+check("request over the limit is rejected", !fourth.ok, JSON.stringify(fourth));
+check("rejection reports a positive Retry-After", fourth.retryAfter > 0, `retryAfter=${fourth.retryAfter}`);
+
+const otherKey = await rateLimit(`test:${Date.now()}:b`, rule);
+check("limits are isolated per key", otherKey.ok && otherKey.remaining === 2);
+
+// Window expiry
+const shortKey = `test:${Date.now()}:short`;
+const shortRule = { limit: 1, windowSeconds: 1 };
+await rateLimit(shortKey, shortRule);
+const blocked = await rateLimit(shortKey, shortRule);
+check("second request inside a 1s window is blocked", !blocked.ok);
+await new Promise((resolve) => setTimeout(resolve, 1100));
+const afterWindow = await rateLimit(shortKey, shortRule);
+check("request is allowed again after the window expires", afterWindow.ok);
+
+// rateLimitAll: the per-account AND per-IP combination
+const accountKey = `test:${Date.now()}:acct`;
+const ipKey = `test:${Date.now()}:ip`;
+const generous = { limit: 100, windowSeconds: 60 };
+const strict = { limit: 1, windowSeconds: 60 };
+
+await rateLimitAll([
+  { key: accountKey, rule: generous },
+  { key: ipKey, rule: strict },
+]);
+const combined = await rateLimitAll([
+  { key: accountKey, rule: generous },
+  { key: ipKey, rule: strict },
+]);
+check(
+  "rateLimitAll fails when ANY rule is breached (IP limit catches account-hopping)",
+  !combined.ok,
+  JSON.stringify(combined)
+);
+
+// --- body size limits --------------------------------------------------------
+
+const small = await readJsonBody<{ hello: string }>(
+  jsonRequest(JSON.stringify({ hello: "world" })),
+  1024
+);
+check("parses a normal JSON body", small.hello === "world");
+
+const oversized = JSON.stringify({ data: "x".repeat(5000) });
+const overResult = await expectThrow(
+  () => readJsonBody(jsonRequest(oversized), 1024),
+  "oversized"
+);
+check(
+  "rejects a body over the cap",
+  overResult.threw && overResult.error instanceof PayloadTooLargeError
+);
+
+// A lying Content-Length must not get past the byte counter.
+const lyingResult = await expectThrow(
+  () => readJsonBody(jsonRequest(oversized, { "content-length": "10" }), 1024),
+  "lying content-length"
+);
+check(
+  "rejects an oversized body that under-reports Content-Length",
+  lyingResult.threw && lyingResult.error instanceof PayloadTooLargeError
+);
+
+const declaredResult = await expectThrow(
+  () => readJsonBody(jsonRequest("{}", { "content-length": "999999" }), 1024),
+  "declared too large"
+);
+check(
+  "rejects early on an oversized Content-Length header",
+  declaredResult.threw && declaredResult.error instanceof PayloadTooLargeError
+);
+
+const emptyBody = await readJsonBody(jsonRequest(""), 1024);
+check("treats an empty body as an empty object", JSON.stringify(emptyBody) === "{}");
+
+// --- client IP ---------------------------------------------------------------
+
+check(
+  "takes the left-most x-forwarded-for entry",
+  clientIp(
+    new Request("https://example.com", {
+      headers: { "x-forwarded-for": "203.0.113.5, 70.41.3.18, 150.172.238.178" },
+    })
+  ) === "203.0.113.5"
+);
+
+check(
+  "falls back to x-real-ip",
+  clientIp(
+    new Request("https://example.com", { headers: { "x-real-ip": "198.51.100.7" } })
+  ) === "198.51.100.7"
+);
+
+check(
+  "reports 'unknown' when no IP header is present",
+  clientIp(new Request("https://example.com")) === "unknown"
+);
+
+console.log(
+  failures === 0 ? "\nAll hardening checks passed." : `\n${failures} check(s) FAILED.`
+);
+process.exit(failures === 0 ? 0 : 1);

@@ -3,9 +3,19 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireProfile } from "@/lib/dal";
+import {
+  PayloadTooLargeError,
+  clientIp,
+  rateLimitedResponse,
+  readJsonBody,
+  tooLargeResponse,
+} from "@/lib/http";
 import { prisma } from "@/lib/prisma";
+import { RATE_LIMITS, rateLimitAll } from "@/lib/rate-limit";
 
 const bodySchema = z.object({ visible: z.boolean() });
+
+const MAX_BODY_BYTES = 1024;
 
 export async function PATCH(
   request: Request,
@@ -14,7 +24,23 @@ export async function PATCH(
   const { user, profile } = await requireProfile();
   const { id } = await context.params;
 
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const limited = await rateLimitAll([
+    { key: `curation:user:${user.id}`, rule: RATE_LIMITS.curationPerAccount },
+    { key: `curation:ip:${clientIp(request)}`, rule: RATE_LIMITS.curationPerIp },
+  ]);
+  if (!limited.ok) return rateLimitedResponse(limited);
+
+  let raw: unknown;
+  try {
+    raw = await readJsonBody(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) {
+      return tooLargeResponse(error.maxBytes);
+    }
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const parsed = bodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }

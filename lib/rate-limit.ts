@@ -189,6 +189,11 @@ export const RATE_LIMITS = {
   // namespace or bypass per-account limits by making more accounts.
   claimUsernamePerIp: { limit: 5, windowSeconds: 60 * 60 },
 
+  // Availability checks are cheap and debounced, but generous enough that a
+  // user trying names in the form never trips it -- while still making a bulk
+  // walk of the namespace impractical.
+  usernameCheckPerIp: { limit: 60, windowSeconds: 60 },
+
   profilePerAccount: { limit: 30, windowSeconds: 60 * 60 },
   profilePerIp: { limit: 60, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, RateLimitRule>;

@@ -15,7 +15,8 @@
     "check:sync": "tsx --conditions=react-server tests/sync.check.mts",
     "check:youtube": "tsx --conditions=react-server tests/youtube.check.mts",
     "check:hardening": "tsx --conditions=react-server tests/hardening.check.mts",
-    "check": "npm run check:crypto && npm run check:sync && npm run check:youtube && npm run check:hardening"
+    "check:username": "tsx --conditions=react-server tests/username.check.mts",
+    "check": "npm run check:crypto && npm run check:sync && npm run check:youtube && npm run check:hardening && npm run check:username"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

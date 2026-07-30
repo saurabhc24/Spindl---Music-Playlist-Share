@@ -74,6 +74,28 @@ proxy.ts              optimistic auth gate (Next 16's renamed middleware)
 - **`@prisma/adapter-pg` over the Neon serverless driver**, so the same code path
   works against local Postgres and Neon.
 
+### Usernames
+
+Profiles store the name twice: `username` as typed (display only) and
+`usernameNormalized` (NFKC + lowercase) which carries the unique index and is the
+only lookup path. NFKC matters for more than tidiness — without it, fullwidth
+`ｄｅｍｏ` would register as a distinct row from `demo` and read identically on
+screen. Postgres `citext` would also work, but Prisma can only model it as
+`Unsupported()`, which is unusable in typed `where` clauses.
+
+Claiming a name does **no** availability pre-check before inserting. Any
+SELECT-then-INSERT is a TOCTOU race, so the unique index arbitrates and the
+`P2002` violation is translated into a friendly "just taken" message. The
+`/api/username/available` endpoint exists purely for form feedback, is debounced
+client-side, rate-limited per IP, and caches only *negative* results (a name
+going from taken to free is rare; the reverse is not).
+
+`UsernameHistory` records released names so that, once renames ship, old links
+301 to the current profile instead of 404ing. It is consulted only after the
+primary lookup misses. Casing variants of a live URL permanently redirect to the
+canonical lowercase form, which also stops `/demo`, `/Demo` and `/DEMO` from each
+occupying a separate ISR cache entry.
+
 ### Handling traffic and abuse
 
 The public profile page is the highest-traffic route, so it's ISR-cached and

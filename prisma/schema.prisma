@@ -29,6 +29,7 @@ model User {
   profile           Profile?
   connectedAccounts ConnectedAccount[]
   playlists         Playlist[]
+  usernameHistory   UsernameHistory[]
 }
 
 model Account {
@@ -68,9 +69,16 @@ model VerificationToken {
 // --- App models ---
 
 model Profile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  username    String   @unique
+  id     String @id @default(cuid())
+  userId String @unique
+
+  /// As typed by the user, for display only. Never used for lookups.
+  username String
+  /// NFKC + lowercase. The uniqueness key and the only lookup path.
+  /// Postgres `citext` would work too, but Prisma can only model it as
+  /// Unsupported(), which is unusable in typed where clauses.
+  usernameNormalized String @unique
+
   displayName String?
   bio         String?  @db.VarChar(280)
   avatarUrl   String?
@@ -80,6 +88,22 @@ model Profile {
   updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Retains usernames a profile has released, so old links can 301 to the current
+/// one instead of 404ing once renames ship. Unique on the normalized name: when a
+/// name is re-claimed by someone else the stale row is deleted, so a name maps to
+/// at most one redirect target.
+model UsernameHistory {
+  id                 String   @id @default(cuid())
+  usernameNormalized String   @unique
+  username           String
+  userId             String
+  changedAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum MusicProvider {

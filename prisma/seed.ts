@@ -28,6 +28,7 @@ async function main() {
     create: {
       userId: user.id,
       username: DEMO_USERNAME,
+      usernameNormalized: DEMO_USERNAME,
       displayName: "Demo Listener",
       bio: "Late-night mixes, road-trip singalongs, and whatever I had on repeat this month.",
     },

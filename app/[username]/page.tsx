@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
-import { getPublicProfile } from "@/lib/profile";
+import { getPublicProfile, getRenamedProfileTarget } from "@/lib/profile";
+import { normalizeUsername } from "@/lib/username";
 import { ProviderIcon, providerLabel } from "@/components/provider-badge";
 
 // Short ISR window as a safety net; dashboard mutations call revalidatePath on
@@ -48,9 +49,24 @@ export default async function PublicProfilePage(
   props: PageProps<"/[username]">
 ) {
   const { username } = await props.params;
+
+  // Send every casing/compatibility variant to one canonical URL. Beyond
+  // avoiding duplicate content, each variant would otherwise get its own ISR
+  // cache entry and its own render, fragmenting the edge cache across
+  // /demo, /Demo, /DEMO and so on.
+  const canonical = normalizeUsername(username);
+  if (canonical && canonical !== username) permanentRedirect(`/${canonical}`);
+
   const data = await getPublicProfile(username);
 
-  if (!data) notFound();
+  if (!data) {
+    // Before giving up, check whether this name was released by a profile that
+    // has since been renamed, and send the visitor to its current home. A
+    // permanent redirect so search engines and shared links follow the move.
+    const currentUsername = await getRenamedProfileTarget(username);
+    if (currentUsername) permanentRedirect(`/${currentUsername}`);
+    notFound();
+  }
 
   const { profile, playlists } = data;
   const displayName = profile.displayName || profile.username;

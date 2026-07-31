@@ -1,10 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Instrument_Serif, Manrope } from "next/font/google";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { absoluteUrl, displayUrl } from "@/lib/app-url";
 import { getPublicProfile, getRenamedProfileTarget } from "@/lib/profile";
 import { normalizeUsername } from "@/lib/username";
-import { ProviderIcon, providerLabel } from "@/components/provider-badge";
+import { providerLabel } from "@/components/provider-badge";
+
+import { Showcase, type Shelf } from "./showcase";
+
+// Scoped to this route rather than the root layout: the dashboard and marketing
+// pages use Geist, and these two are only ever painted here.
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+/**
+ * A shelf holds at most this many playlists.
+ *
+ * The scene lays a shelf out as a single row and then scales that row to fit, so
+ * a shelf of twenty would be scaled down to illegibility. Three matches the
+ * design and keeps every cover readable once a shelf is focused.
+ */
+const MAX_PER_SHELF = 3;
 
 // Short ISR window as a safety net; dashboard mutations call revalidatePath on
 // this route so edits show up immediately rather than waiting this out.
@@ -71,112 +99,169 @@ export default async function PublicProfilePage(
   const { profile, playlists } = data;
   const displayName = profile.displayName || profile.username;
 
-  return (
-    <div className="mx-auto w-full max-w-xl flex-1 px-6 py-16">
-      <header className="flex flex-col items-center text-center">
-        {profile.avatarUrl ? (
-          // Avatars come from arbitrary provider CDNs, so plain <img> avoids
-          // having to allowlist every remote host in next.config.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={profile.avatarUrl}
-            alt=""
-            width={96}
-            height={96}
-            className="h-24 w-24 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-200 text-3xl font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-        )}
+  // Spindl has no notion of a named shelf, so the closest honest grouping is the
+  // service a playlist came from -- a real label, from data the user already
+  // has, rather than an invented one. Within a shelf the user's own ordering is
+  // preserved; a provider with more than MAX_PER_SHELF spills onto further
+  // shelves of the same name rather than crowding one row.
+  const byProvider = new Map<string, typeof playlists>();
+  for (const playlist of playlists) {
+    const group = byProvider.get(playlist.provider) ?? [];
+    group.push(playlist);
+    byProvider.set(playlist.provider, group);
+  }
 
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight">
+  const shelves: Shelf[] = [];
+  for (const [provider, group] of byProvider) {
+    for (let i = 0; i < group.length; i += MAX_PER_SHELF) {
+      shelves.push({
+        name: providerLabel(provider as (typeof playlists)[number]["provider"]),
+        items: group.slice(i, i + MAX_PER_SHELF).map((playlist) => ({
+          id: playlist.id,
+          title: playlist.title,
+          provider: playlist.provider,
+          providerLabel: providerLabel(playlist.provider),
+          coverImageUrl: playlist.coverImageUrl,
+          trackCount: playlist.trackCount,
+          externalUrl: playlist.externalUrl,
+        })),
+      });
+    }
+  }
+
+  if (shelves.length > 0) {
+    return (
+      <div className={`${instrumentSerif.variable} ${manrope.variable} flex-1`}>
+        <Showcase
+          displayName={displayName}
+          handle={`@${profile.username}`}
+          avatarUrl={profile.avatarUrl}
+          bio={profile.bio}
+          shelves={shelves}
+          totalCount={playlists.length}
+          shareUrl={absoluteUrl(`/${profile.usernameNormalized}`)}
+          shareDisplay={displayUrl(`/${profile.usernameNormalized}`)}
+        />
+      </div>
+    );
+  }
+
+  // Reached only when the profile has no visible playlists: there is no shelf to
+  // build, and an empty rack reads as broken rather than as "nothing here yet".
+  return (
+    <div
+      className={`${instrumentSerif.variable} ${manrope.variable} flex w-full flex-1 justify-center`}
+      style={{ background: "#060504" }}
+    >
+      <div
+        className="flex w-full flex-col items-center justify-center px-8 text-center"
+        style={{
+          maxWidth: 460,
+          minHeight: "100dvh",
+          background:
+            "radial-gradient(120% 80% at 50% -6%, oklch(0.24 0.02 70) 0%, oklch(0.16 0.015 65) 32%, oklch(0.09 0.01 60) 66%, #060504 100%)",
+          fontFamily: "var(--font-manrope), sans-serif",
+          color: "oklch(0.94 0.01 85)",
+        }}
+      >
+        <div
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: "50%",
+            background:
+              "conic-gradient(from 210deg, oklch(0.9 0.07 85), oklch(0.72 0.09 70), oklch(0.95 0.05 90), oklch(0.8 0.09 80))",
+            padding: 2,
+            boxShadow: "0 0 30px oklch(0.85 0.09 82 / 0.3)",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              borderRadius: "50%",
+              background:
+                "linear-gradient(150deg, oklch(0.34 0.02 70), oklch(0.2 0.015 65))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {profile.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.avatarUrl}
+                alt=""
+                width={84}
+                height={84}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <span
+                style={{
+                  fontFamily: "var(--font-instrument-serif), serif",
+                  fontSize: 38,
+                  color: "oklch(0.92 0.05 85)",
+                }}
+              >
+                {displayName.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <h1
+          style={{
+            fontFamily: "var(--font-instrument-serif), serif",
+            fontWeight: 400,
+            fontSize: 34,
+            lineHeight: 1.1,
+            margin: "22px 0 6px",
+          }}
+        >
           {displayName}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p style={{ fontSize: 13, color: "oklch(0.86 0.08 82)" }}>
           @{profile.username}
         </p>
 
         {profile.bio && (
-          <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <p
+            style={{
+              marginTop: 18,
+              maxWidth: 340,
+              fontSize: 13.5,
+              lineHeight: 1.6,
+              color: "oklch(0.72 0.02 82)",
+            }}
+          >
             {profile.bio}
           </p>
         )}
-      </header>
 
-      {playlists.length === 0 ? (
-        <p className="mt-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          No playlists shared yet. Check back soon.
+        <p
+          style={{
+            marginTop: 40,
+            fontSize: 13,
+            color: "oklch(0.6 0.02 80)",
+          }}
+        >
+          No playlists on the shelf yet. Check back soon.
         </p>
-      ) : (
-        <ul className="mt-12 space-y-3">
-          {playlists.map((playlist) => (
-            <li key={playlist.id}>
-              <a
-                href={playlist.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center gap-4 rounded-xl border border-zinc-200 p-3 transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
-              >
-                {playlist.coverImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={playlist.coverImageUrl}
-                    alt=""
-                    width={64}
-                    height={64}
-                    className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="h-16 w-16 shrink-0 rounded-lg bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800" />
-                )}
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{playlist.title}</p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                    <ProviderIcon
-                      provider={playlist.provider}
-                      className="h-3.5 w-3.5"
-                    />
-                    {providerLabel(playlist.provider)}
-                    {playlist.trackCount !== null && (
-                      <>
-                        <span aria-hidden="true">&middot;</span>
-                        {playlist.trackCount} tracks
-                      </>
-                    )}
-                  </p>
-                </div>
-
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="h-5 w-5 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8.25 4.5l7.5 7.5-7.5 7.5"
-                  />
-                </svg>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <footer className="mt-16 text-center">
         <Link
           href="/"
-          className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300"
+          style={{
+            marginTop: 48,
+            fontSize: 12,
+            fontWeight: 600,
+            color: "oklch(0.5 0.015 78)",
+          }}
         >
           Make your own Spindl
         </Link>
-      </footer>
+      </div>
     </div>
   );
 }

@@ -24,3 +24,47 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- public profile showcase ------------------------------------------------
+   Keyframes for the shelf scene. Global because the covers that use them are
+   rendered inside a client component with inline styles, and @keyframes cannot
+   be expressed inline. */
+@keyframes shelfFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shelfPulse {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes shelfSheen {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(240%) skewX(-18deg);
+  }
+}
+
+/* The scene leans on ambient motion, which is exactly the kind that provokes
+   vestibular symptoms. The layout is identical without it. */
+@media (prefers-reduced-motion: reduce) {
+  [data-shelf-scene] *,
+  [data-shelf-scene] *::before,
+  [data-shelf-scene] *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

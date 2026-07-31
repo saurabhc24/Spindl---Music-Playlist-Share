@@ -7,7 +7,9 @@ import {
   auth,
   isEmailLoginConfigured,
   isGoogleLoginConfigured,
+  isSpotifyLoginConfigured,
 } from "@/lib/auth";
+import { ProviderIcon } from "@/components/provider-badge";
 
 const ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked:
@@ -15,6 +17,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   EmailSignInError: "We couldn't send that email. Please try again.",
   Default: "Something went wrong signing you in. Please try again.",
 };
+
+// Shared so a second OAuth button can't drift from the first.
+const OAUTH_BUTTON_CLASS =
+  "flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900";
 
 export default async function LoginPage(props: PageProps<"/login">) {
   const session = await auth();
@@ -35,7 +41,9 @@ export default async function LoginPage(props: PageProps<"/login">) {
     callbackUrl && /^\/(?!\/)/.test(callbackUrl) ? callbackUrl : "/dashboard";
 
   const googleEnabled = isGoogleLoginConfigured();
+  const spotifyEnabled = isSpotifyLoginConfigured();
   const emailEnabled = isEmailLoginConfigured();
+  const oauthEnabled = googleEnabled || spotifyEnabled;
 
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">
@@ -61,28 +69,30 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </p>
         )}
 
-        {!googleEnabled && !emailEnabled && (
+        {!oauthEnabled && !emailEnabled && (
           <p className="mt-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
             No sign-in method is configured yet. Set{" "}
             <code className="font-mono text-xs">GOOGLE_CLIENT_ID</code> and{" "}
-            <code className="font-mono text-xs">GOOGLE_CLIENT_SECRET</code> (or{" "}
+            <code className="font-mono text-xs">GOOGLE_CLIENT_SECRET</code>,{" "}
+            <code className="font-mono text-xs">SPOTIFY_CLIENT_ID</code> and{" "}
+            <code className="font-mono text-xs">SPOTIFY_CLIENT_SECRET</code>, or{" "}
             <code className="font-mono text-xs">AUTH_RESEND_KEY</code> for email
-            links) in your environment, then redeploy.
+            links, then redeploy.
           </p>
         )}
 
+        {/* Each provider is a separate sign-in *and* sign-up path: Auth.js
+            creates the account on first use and signs the same person in
+            afterwards, so there is no separate registration flow to build. */}
+        <div className={oauthEnabled ? "mt-8 space-y-3" : ""}>
         {googleEnabled && (
         <form
-          className="mt-8"
           action={async () => {
             "use server";
             await signIn("google", { redirectTo });
           }}
         >
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-          >
+          <button type="submit" className={OAUTH_BUTTON_CLASS}>
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
               <path
                 fill="#4285F4"
@@ -106,7 +116,25 @@ export default async function LoginPage(props: PageProps<"/login">) {
         </form>
         )}
 
-        {googleEnabled && emailEnabled && (
+        {spotifyEnabled && (
+        <form
+          action={async () => {
+            "use server";
+            await signIn("spotify", { redirectTo });
+          }}
+        >
+          <button type="submit" className={OAUTH_BUTTON_CLASS}>
+            <ProviderIcon
+              provider="SPOTIFY"
+              className="h-5 w-5 text-[#1db954]"
+            />
+            Continue with Spotify
+          </button>
+        </form>
+        )}
+        </div>
+
+        {oauthEnabled && emailEnabled && (
           <div className="my-6 flex items-center gap-4">
             <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
             <span className="text-xs uppercase tracking-wide text-zinc-400">

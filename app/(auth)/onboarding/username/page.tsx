@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { displayUrl } from "@/lib/app-url";
+import { signOut } from "@/lib/auth";
 import { requireUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 
@@ -29,6 +30,29 @@ export default async function ClaimUsernamePage() {
         </p>
 
         <UsernameForm appUrl={appUrl} />
+
+        {/* Landing here means this account has no profile yet -- which, for
+            someone with more than one Google account, usually means they signed
+            in with the wrong one. Naming the account makes that obvious, and the
+            sign-out link is the only way back: this page sits outside the
+            dashboard layout, so without it there is no way to switch accounts
+            from here short of clearing cookies. */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <span>Signed in as {user.email ?? "an unknown account"}.</span>
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/login" });
+            }}
+          >
+            <button
+              type="submit"
+              className="underline underline-offset-4 transition-colors hover:text-foreground"
+            >
+              Not you? Sign out
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

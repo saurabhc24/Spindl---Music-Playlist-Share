@@ -34,8 +34,15 @@ function buildProviders(): NextAuthConfig["providers"] {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         // Login only wants identity. The YouTube connect flow requests
         // youtube.readonly separately so signing in never prompts for it.
+        //
+        // Deliberately no `prompt: "select_account"`. Forcing the chooser on
+        // every sign-in means a returning user has to re-pick their account each
+        // time, and picking the wrong one silently lands them in a *different*
+        // Spindl account -- which reads as the app having forgotten them. Left
+        // unset, Google reuses the active session when there's one and still
+        // shows the chooser by itself when several are signed in.
         authorization: {
-          params: { scope: "openid email profile", prompt: "select_account" },
+          params: { scope: "openid email profile" },
         },
       })
     );

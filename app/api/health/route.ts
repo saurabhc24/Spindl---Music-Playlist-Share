@@ -33,6 +33,10 @@ const OPTIONAL_VARS = [
   "YOUTUBE_REDIRECT_URI",
   "AUTH_RESEND_KEY",
   "CRON_SECRET",
+  // Without this, /admin 404s for everyone -- and since the gate deliberately
+  // 404s rather than 403s, a missing variable is indistinguishable from correct
+  // refusal when probing from outside. Reported here so it stays diagnosable.
+  "ADMIN_EMAILS",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
   "BLOB_READ_WRITE_TOKEN",

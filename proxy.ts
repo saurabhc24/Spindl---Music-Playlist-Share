@@ -23,5 +23,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding/:path*"],
+  // /admin is included so unauthenticated requests are turned away here rather
+  // than reaching the page; requireAdmin() still gates it authoritatively (and
+  // 404s non-admins so the route isn't discoverable).
+  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/admin/:path*", "/admin"],
 };

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getAdminUser } from "@/lib/admin";
 import { requireProfile } from "@/lib/dal";
 import { signOut } from "@/lib/auth";
 
@@ -16,6 +17,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { profile } = await requireProfile();
+  const admin = await getAdminUser();
 
   return (
     <div className="flex flex-1 flex-col">
@@ -49,7 +51,10 @@ export default async function DashboardLayout({
 
         <nav className="mx-auto w-full max-w-5xl px-6">
           <ul className="flex gap-6 overflow-x-auto">
-            {NAV_ITEMS.map((item) => (
+            {(admin
+              ? [...NAV_ITEMS, { href: "/admin", label: "Admin" }]
+              : NAV_ITEMS
+            ).map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}

@@ -16,7 +16,10 @@ export const getPublicProfile = cache(async (username: string) => {
     where: { usernameNormalized: normalized },
   });
 
-  if (!profile || !profile.isPublic) return null;
+  // Two independent reasons a page may be invisible: the owner turned it off,
+  // or an admin suspended it. Both render as an ordinary 404 -- a suspended page
+  // shouldn't announce that it was suspended.
+  if (!profile || !profile.isPublic || profile.suspendedAt) return null;
 
   const playlists = await prisma.playlist.findMany({
     where: { userId: profile.userId, visible: true },
@@ -38,8 +41,25 @@ export const getRenamedProfileTarget = cache(async (username: string) => {
 
   const historical = await prisma.usernameHistory.findUnique({
     where: { usernameNormalized: normalized },
-    select: { user: { select: { profile: { select: { usernameNormalized: true } } } } },
+    select: {
+      user: {
+        select: {
+          profile: {
+            select: {
+              usernameNormalized: true,
+              isPublic: true,
+              suspendedAt: true,
+            },
+          },
+        },
+      },
+    },
   });
 
-  return historical?.user.profile?.usernameNormalized ?? null;
+  const target = historical?.user.profile;
+  // Don't redirect onto a page that is itself hidden or suspended -- that would
+  // turn a 404 into a redirect to another 404, and leak that the account exists.
+  if (!target || !target.isPublic || target.suspendedAt) return null;
+
+  return target.usernameNormalized;
 });

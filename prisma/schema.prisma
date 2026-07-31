@@ -140,9 +140,13 @@ model ConnectedAccount {
 }
 
 model Playlist {
-  id                 String        @id @default(cuid())
-  userId             String
-  connectedAccountId String
+  id     String @id @default(cuid())
+  userId String
+  /// Null for a playlist added by pasting its link, which belongs to no
+  /// connected account. That distinction is load-bearing: sync marks vanished
+  /// playlists stale by elimination, so it must skip rows it was never
+  /// responsible for importing.
+  connectedAccountId String?
   provider           MusicProvider
   externalId         String
   title              String
@@ -157,8 +161,8 @@ model Playlist {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connectedAccount ConnectedAccount @relation(fields: [connectedAccountId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connectedAccount ConnectedAccount? @relation(fields: [connectedAccountId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider, externalId])
   @@index([userId, visible, sortOrder])

@@ -175,6 +175,11 @@ export async function syncProvider({
         userId,
         provider: connection.provider,
         isStale: false,
+        // Playlists added by pasting a link have no connected account, and this
+        // provider never claimed to import them -- so their absence from the
+        // fetched list means nothing. Without this, one sync would flag every
+        // manually added playlist of the same provider as "no longer available".
+        connectedAccountId: { not: null },
         ...(fetchedIds.length > 0
           ? { externalId: { notIn: fetchedIds } }
           : {}),

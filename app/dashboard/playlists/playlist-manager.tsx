@@ -22,6 +22,8 @@ import { CSS } from "@dnd-kit/utilities";
 import type { MusicProvider } from "@/app/generated/prisma/enums";
 import { ProviderIcon, providerLabel } from "@/components/provider-badge";
 
+import { removePlaylistLink } from "./actions";
+
 export type PlaylistRow = {
   id: string;
   title: string;
@@ -30,6 +32,8 @@ export type PlaylistRow = {
   trackCount: number | null;
   visible: boolean;
   isStale: boolean;
+  /** Added by pasting a link rather than imported from a connected account. */
+  isManual: boolean;
 };
 
 const WRITE_DEBOUNCE_MS = 400;
@@ -227,6 +231,11 @@ function SortableRow({
               {playlist.trackCount} tracks
             </>
           )}
+          {playlist.isManual && (
+            <span className="ml-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+              Added by link
+            </span>
+          )}
           {playlist.isStale && (
             <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
               No longer available
@@ -234,6 +243,36 @@ function SortableRow({
           )}
         </p>
       </div>
+
+      {/* Imported playlists are curated by hiding them -- deleting one would
+          only invite the next sync to import it again. A pasted link has no
+          such source, so removing it is the only way off the page. */}
+      {playlist.isManual && (
+        <form action={removePlaylistLink}>
+          <input type="hidden" name="playlistId" value={playlist.id} />
+          <button
+            type="submit"
+            aria-label={`Remove ${playlist.title}`}
+            title="Remove"
+            className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:text-red-600 dark:hover:text-red-400"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </form>
+      )}
 
       <label className="flex shrink-0 cursor-pointer items-center gap-2">
         <span className="sr-only">Show {playlist.title} on my page</span>

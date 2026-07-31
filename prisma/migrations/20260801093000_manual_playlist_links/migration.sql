@@ -1,0 +1,13 @@
+-- Playlists added by pasting a link belong to no connected account, so the
+-- foreign key has to become optional.
+--
+-- Written by hand rather than generated, for the same reason as the username
+-- migration: this runs against a table that already has rows, and dropping a
+-- NOT NULL is the one direction that is always safe on populated data. Existing
+-- rows keep their connectedAccountId, so nothing is rewritten and no backfill
+-- is needed.
+--
+-- The ON DELETE CASCADE is unchanged: disconnecting an account still removes the
+-- playlists it imported. Manual rows have a NULL here, so no cascade can reach
+-- them -- which is the intent. They are removed explicitly from the dashboard.
+ALTER TABLE "Playlist" ALTER COLUMN "connectedAccountId" DROP NOT NULL;

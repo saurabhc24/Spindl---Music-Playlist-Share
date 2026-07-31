@@ -1,9 +1,57 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { prisma } from "@/lib/prisma";
+
+/**
+ * Whether each sign-in method has the credentials it needs.
+ *
+ * Registering a provider without credentials doesn't fail loudly -- it renders a
+ * working-looking button that sends the user to the provider and gets a bare
+ * "invalid_client" error page back, with nothing pointing at the real cause. So
+ * unconfigured providers are left out entirely and the login page hides them.
+ */
+export function isGoogleLoginConfigured() {
+  return Boolean(
+    process.env.GOOGLE_CLIENT_ID?.trim() &&
+      process.env.GOOGLE_CLIENT_SECRET?.trim()
+  );
+}
+
+export function isEmailLoginConfigured() {
+  return Boolean(process.env.AUTH_RESEND_KEY?.trim());
+}
+
+function buildProviders(): NextAuthConfig["providers"] {
+  const providers: NextAuthConfig["providers"] = [];
+
+  if (isGoogleLoginConfigured()) {
+    providers.push(
+      Google({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        // Login only wants identity. The YouTube connect flow requests
+        // youtube.readonly separately so signing in never prompts for it.
+        authorization: {
+          params: { scope: "openid email profile", prompt: "select_account" },
+        },
+      })
+    );
+  }
+
+  if (isEmailLoginConfigured()) {
+    providers.push(
+      Resend({
+        // apiKey is inferred from AUTH_RESEND_KEY
+        from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
+      })
+    );
+  }
+
+  return providers;
+}
 
 // This config handles *app login only*. Connecting Spotify/YouTube for playlist
 // import is a separate, hand-rolled OAuth flow with its own token storage
@@ -20,21 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
     verifyRequest: "/login/verify",
   },
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // Login only wants identity. The YouTube connect flow requests
-      // youtube.readonly separately so signing in never prompts for it.
-      authorization: {
-        params: { scope: "openid email profile", prompt: "select_account" },
-      },
-    }),
-    Resend({
-      // apiKey is inferred from AUTH_RESEND_KEY
-      from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
-    }),
-  ],
+  providers: buildProviders(),
   callbacks: {
     session({ session, user }) {
       // Expose the DB user id so server components can query Profile/Playlist.

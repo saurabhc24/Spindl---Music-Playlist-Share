@@ -2,7 +2,12 @@ import Link from "next/link";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
-import { signIn, auth } from "@/lib/auth";
+import {
+  signIn,
+  auth,
+  isEmailLoginConfigured,
+  isGoogleLoginConfigured,
+} from "@/lib/auth";
 
 const ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked:
@@ -29,6 +34,9 @@ export default async function LoginPage(props: PageProps<"/login">) {
   const redirectTo =
     callbackUrl && /^\/(?!\/)/.test(callbackUrl) ? callbackUrl : "/dashboard";
 
+  const googleEnabled = isGoogleLoginConfigured();
+  const emailEnabled = isEmailLoginConfigured();
+
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
@@ -53,6 +61,17 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </p>
         )}
 
+        {!googleEnabled && !emailEnabled && (
+          <p className="mt-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+            No sign-in method is configured yet. Set{" "}
+            <code className="font-mono text-xs">GOOGLE_CLIENT_ID</code> and{" "}
+            <code className="font-mono text-xs">GOOGLE_CLIENT_SECRET</code> (or{" "}
+            <code className="font-mono text-xs">AUTH_RESEND_KEY</code> for email
+            links) in your environment, then redeploy.
+          </p>
+        )}
+
+        {googleEnabled && (
         <form
           className="mt-8"
           action={async () => {
@@ -85,15 +104,19 @@ export default async function LoginPage(props: PageProps<"/login">) {
             Continue with Google
           </button>
         </form>
+        )}
 
-        <div className="my-6 flex items-center gap-4">
-          <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-          <span className="text-xs uppercase tracking-wide text-zinc-400">
-            or
-          </span>
-          <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-        </div>
+        {googleEnabled && emailEnabled && (
+          <div className="my-6 flex items-center gap-4">
+            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+            <span className="text-xs uppercase tracking-wide text-zinc-400">
+              or
+            </span>
+            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        )}
 
+        {emailEnabled && (
         <form
           action={async (formData: FormData) => {
             "use server";
@@ -130,6 +153,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
             Email me a sign-in link
           </button>
         </form>
+        )}
       </div>
     </div>
   );

@@ -151,6 +151,58 @@ for (const [label, input] of [
   );
 }
 
+// --- in-page players ---------------------------------------------------------
+
+console.log("\nEmbeddable players");
+const { playlistEmbed, isPlayable } = await import("../lib/playlist-embed");
+
+const spotifyEmbed = playlistEmbed("SPOTIFY", SPOTIFY_ID);
+check(
+  "Spotify playlists get the official embed",
+  spotifyEmbed?.src === `https://open.spotify.com/embed/playlist/${SPOTIFY_ID}?theme=0`,
+  String(spotifyEmbed?.src)
+);
+check(
+  "the Spotify preview limitation is stated to the visitor",
+  /30-second/i.test(spotifyEmbed?.note ?? ""),
+  spotifyEmbed?.note
+);
+
+const youtubeEmbed = playlistEmbed("YOUTUBE", YT_ID);
+check(
+  "YouTube playlists get the videoseries embed",
+  youtubeEmbed?.src === `https://www.youtube.com/embed/videoseries?list=${YT_ID}`,
+  String(youtubeEmbed?.src)
+);
+
+check("Amazon has no player", playlistEmbed("AMAZON", AMZ) === null);
+check(
+  "OTHER has no player",
+  playlistEmbed("OTHER", "https://tidal.com/browse/playlist/abc") === null
+);
+
+// The id reaches an iframe src, so it is re-validated at the point of use rather
+// than trusted because it was validated on the way into the database.
+for (const [label, id] of [
+  ["a quote", `${SPOTIFY_ID}"onload=alert(1)`],
+  ["a path traversal", "../../evil"],
+  ["a query injection", `${SPOTIFY_ID}&foo=bar`],
+  ["an empty id", ""],
+] as const) {
+  check(`Spotify rejects ${label} at embed time`, playlistEmbed("SPOTIFY", id) === null);
+}
+check(
+  "YouTube rejects a crafted id at embed time",
+  playlistEmbed("YOUTUBE", `${YT_ID}" onload="alert(1)`) === null
+);
+
+check(
+  "isPlayable agrees with playlistEmbed",
+  isPlayable("SPOTIFY", SPOTIFY_ID) &&
+    isPlayable("YOUTUBE", YT_ID) &&
+    !isPlayable("AMAZON", AMZ)
+);
+
 console.log(
   failures === 0 ? "\nAll playlist-link checks passed." : `\n${failures} check(s) FAILED.`
 );

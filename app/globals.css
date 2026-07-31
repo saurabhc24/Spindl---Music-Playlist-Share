@@ -49,6 +49,15 @@ body {
   }
 }
 
+@keyframes shelfSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes shelfSheen {
   0% {
     transform: translateX(-140%) skewX(-18deg);

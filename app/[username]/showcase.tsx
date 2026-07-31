@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { MusicProvider } from "@/app/generated/prisma/enums";
 
+import { PlayerOverlay } from "./player-overlay";
+
 export type ShowcaseItem = {
   id: string;
   title: string;
@@ -12,6 +14,8 @@ export type ShowcaseItem = {
   coverImageUrl: string | null;
   trackCount: number | null;
   externalUrl: string;
+  /** Needed to build the embed URL; never rendered. */
+  externalId: string;
 };
 
 export type Shelf = {
@@ -68,6 +72,9 @@ export function Showcase({
 }: ShowcaseProps) {
   const [active, setActive] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  // The playlist whose player is open. "No redirects": tapping a cover brings the
+  // player here rather than handing the visitor to the provider's site.
+  const [playing, setPlaying] = useState<ShowcaseItem | null>(null);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const cabinetRef = useRef<HTMLDivElement | null>(null);
@@ -572,12 +579,16 @@ export function Showcase({
                             width: 150,
                           }}
                         >
-                          <a
-                            href={item.externalUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => setPlaying(item)}
                             title={item.title}
+                            aria-label={`Play ${item.title}`}
                             style={{
+                              padding: 0,
+                              border: "none",
+                              cursor: "pointer",
+                              appearance: "none",
                               position: "relative",
                               width: 150,
                               height: 150,
@@ -692,7 +703,7 @@ export function Showcase({
                                 }}
                               />
                             </div>
-                          </a>
+                          </button>
 
                           <div
                             aria-hidden="true"
@@ -840,6 +851,13 @@ export function Showcase({
             })}
           </div>
         </div>
+
+        <PlayerOverlay
+          item={playing}
+          gradient={playing ? coverGradient(playing.title) : ""}
+          dotColor={playing ? PROVIDER_DOT[playing.provider] : "#fff"}
+          onClose={() => setPlaying(null)}
+        />
 
         <footer
           style={{

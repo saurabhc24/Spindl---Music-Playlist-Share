@@ -124,6 +124,7 @@ export default async function PublicProfilePage(
           coverImageUrl: playlist.coverImageUrl,
           trackCount: playlist.trackCount,
           externalUrl: playlist.externalUrl,
+          externalId: playlist.externalId,
         })),
       });
     }

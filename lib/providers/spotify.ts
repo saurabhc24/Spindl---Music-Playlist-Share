@@ -82,8 +82,19 @@ export const spotify: ProviderClient = {
       redirect_uri: redirectUri,
       scope: SCOPES.join(" "),
       state,
-      // Always show the consent screen so a user can switch Spotify accounts.
-      show_dialog: "true",
+      // Deliberately no `show_dialog`. Setting it true forces the approval
+      // screen even for a user who is already signed in to Spotify in this
+      // browser and has already granted these scopes -- turning what should be
+      // a silent round-trip into a form to click through on every reconnect.
+      // Left off, that user is redirected straight back and the connect feels
+      // instant. The cost is that switching to a different Spotify account now
+      // means signing out of Spotify in the browser first, which is the rarer
+      // case by far.
+      //
+      // Note this is as close to "log in with the app you're already using" as
+      // the web gets: Spotify's app-switch authorization lives only in the iOS
+      // and Android native SDKs, which a browser cannot invoke. What carries
+      // over is the *browser's* Spotify session, not the desktop or phone app's.
     });
     return `${AUTHORIZE_URL}?${params.toString()}`;
   },

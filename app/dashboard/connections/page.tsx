@@ -3,6 +3,7 @@ import { ProviderIcon, providerLabel } from "@/components/provider-badge";
 import { requireProfile } from "@/lib/dal";
 import { isProviderConfigured, providerSlug } from "@/lib/providers";
 import { prisma } from "@/lib/prisma";
+import { syncFailureHint } from "@/lib/sync-status";
 
 import { ConnectionActions } from "./connection-actions";
 
@@ -28,26 +29,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   not_configured:
     "This service isn't configured yet. Add its API credentials to your environment.",
 };
-
-/**
- * Turns the stored lastSyncStatus into something the user can act on.
- *
- * The raw value is the provider's own error text, which is too noisy to show
- * verbatim but does carry the one fact that matters: whether this is worth
- * retrying, worth reconnecting, or nothing the user can fix at all.
- */
-function syncFailureHint(status: string): string {
-  if (/premium/i.test(status)) {
-    return "Spotify only returns playlists when the account that owns the API app has Premium. Nothing you can fix from here — the connection itself is fine.";
-  }
-  if (/quota|rate.?limit/i.test(status)) {
-    return "The service is rate-limiting us or is out of daily quota. Try again later.";
-  }
-  if (/revoked|expired|reconnect/i.test(status)) {
-    return "The connection expired or was revoked. Reconnect the account.";
-  }
-  return "Last sync failed. Try syncing again, or reconnect the account.";
-}
 
 export default async function ConnectionsPage(
   props: PageProps<"/dashboard/connections">

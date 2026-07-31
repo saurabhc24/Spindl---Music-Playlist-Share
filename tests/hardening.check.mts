@@ -189,6 +189,70 @@ check(
 );
 process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
 
+// --- provider failure explanations -------------------------------------------
+
+const { syncFailureHint } = await import("../lib/sync-status");
+
+// The exact strings observed in production, kept verbatim so a reworded case
+// can't quietly stop matching the failure it was written for.
+const PREMIUM =
+  "error: Spotify playlist fetch failed: Active premium subscription required for the owner of the app. When the subscription status changes, it can take a few hours before requests are allowed again.";
+const NOT_ALLOWLISTED =
+  "error: Spotify playlist fetch failed: Check settings on https://developer.spotify.com/dashboard, the user may not be registered.";
+
+check(
+  "the app-owner Premium requirement is explained as unfixable by the user",
+  /Premium/.test(syncFailureHint(PREMIUM)) &&
+    /nothing you can fix/i.test(syncFailureHint(PREMIUM)),
+  syncFailureHint(PREMIUM)
+);
+
+check(
+  "a non-allowlisted account is explained as the 5-user development cap",
+  /allowlist/i.test(syncFailureHint(NOT_ALLOWLISTED)) &&
+    /5 accounts/.test(syncFailureHint(NOT_ALLOWLISTED)),
+  syncFailureHint(NOT_ALLOWLISTED)
+);
+
+check(
+  "the two Spotify failures get different explanations",
+  syncFailureHint(PREMIUM) !== syncFailureHint(NOT_ALLOWLISTED)
+);
+
+check(
+  "neither Spotify case tells the user to reconnect, which cannot help",
+  !/reconnect/i.test(syncFailureHint(PREMIUM)) &&
+    !/reconnect/i.test(syncFailureHint(NOT_ALLOWLISTED))
+);
+
+check(
+  "a quota failure says to wait",
+  /later/i.test(
+    syncFailureHint("error: YouTube's daily quota is exhausted. Please try again later.")
+  )
+);
+
+check(
+  "a revoked grant says to reconnect",
+  /reconnect/i.test(
+    syncFailureHint("error: The connection was revoked or expired. Please reconnect the account.")
+  )
+);
+
+// The case that produced this whole change: an unmatched error used to give
+// advice ("try again, or reconnect") that was simply wrong.
+const unknown = syncFailureHint("error: Spotify playlist fetch failed: teapot");
+check(
+  "an unrecognized failure quotes the provider instead of guessing",
+  unknown.includes("teapot") && !/^Last sync failed/.test(unknown),
+  unknown
+);
+check(
+  "the raw 'error:' prefix is not shown to the user",
+  !unknown.includes("error:"),
+  unknown
+);
+
 console.log(
   failures === 0 ? "\nAll hardening checks passed." : `\n${failures} check(s) FAILED.`
 );

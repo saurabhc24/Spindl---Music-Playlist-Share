@@ -3,10 +3,11 @@ import { revalidatePath } from "next/cache";
 
 import { requireProfile } from "@/lib/dal";
 import { clientIp, rateLimitedResponse } from "@/lib/http";
-import { parseProviderSlug } from "@/lib/providers";
+import { ProviderAuthError, parseProviderSlug } from "@/lib/providers";
 import { prisma } from "@/lib/prisma";
 import { RATE_LIMITS, rateLimitAll } from "@/lib/rate-limit";
 import { SyncError, syncProvider } from "@/lib/sync";
+import { syncFailureHint } from "@/lib/sync-status";
 
 export async function POST(
   request: Request,
@@ -65,6 +66,18 @@ export async function POST(
         { status: 400 }
       );
     }
+    // The provider refused the read for a reason of its own -- an account
+    // requirement, an allowlist, a revoked grant. "Sync failed, please try
+    // again" is wrong for all of them: nothing about retrying helps, and the
+    // user is left with no idea what happened. Explain it instead.
+    if (error instanceof ProviderAuthError) {
+      console.error(`[sync:${slug}] provider refused`, error);
+      return NextResponse.json(
+        { error: syncFailureHint(error.message) },
+        { status: 400 }
+      );
+    }
+
     console.error(`[sync:${slug}] failed`, error);
     return NextResponse.json(
       { error: "Sync failed. Please try again." },

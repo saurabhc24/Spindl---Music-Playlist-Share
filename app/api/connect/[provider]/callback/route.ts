@@ -95,7 +95,10 @@ export async function GET(
   // failure below is an import problem, not a connection problem.
   try {
     // Pull playlists immediately so the dashboard isn't empty after connecting.
-    await syncProvider({ userId: user.id, connection });
+    await syncProvider({
+      userId: user.id,
+      connection: { ...connection, provider },
+    });
   } catch (error) {
     // syncProvider has already recorded the provider's own reason in
     // lastSyncStatus, which the connections page turns into a specific hint.

@@ -8,7 +8,16 @@ import {
   PROVIDERS,
   ProviderAuthError,
   ProviderRateLimitError,
+  type ConnectableProvider,
 } from "@/lib/providers";
+
+/**
+ * A ConnectedAccount only ever exists for a provider we can connect to, but the
+ * column is typed as the full MusicProvider enum (which now also contains the
+ * link-only AMAZON and OTHER). This narrows it once, here, rather than at each
+ * PROVIDERS lookup.
+ */
+type Connection = ConnectedAccount & { provider: ConnectableProvider };
 
 // Refresh slightly early so a long fetch can't start with a token that expires
 // mid-flight.
@@ -31,7 +40,7 @@ export class SyncError extends Error {
  * Returns a usable access token for the connection, refreshing and persisting a
  * new one first if the stored token is expired or about to be.
  */
-async function getFreshAccessToken(connection: ConnectedAccount) {
+async function getFreshAccessToken(connection: Connection) {
   const accessToken = decryptNullable(connection.accessTokenEncrypted);
   const refreshToken = decryptNullable(connection.refreshTokenEncrypted);
 
@@ -94,7 +103,7 @@ export async function syncProvider({
   connection,
 }: {
   userId: string;
-  connection: ConnectedAccount;
+  connection: Connection;
 }): Promise<SyncResult> {
   try {
     const accessToken = await getFreshAccessToken(connection);

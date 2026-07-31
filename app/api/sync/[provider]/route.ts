@@ -42,7 +42,12 @@ export async function POST(
   }
 
   try {
-    const result = await syncProvider({ userId: user.id, connection });
+    // `provider` came from parseProviderSlug, so it is narrowed to a provider
+    // that actually has a client; the column's own type is the wider enum.
+    const result = await syncProvider({
+      userId: user.id,
+      connection: { ...connection, provider },
+    });
 
     revalidatePath(`/${profile.username}`);
     revalidatePath("/dashboard/playlists");

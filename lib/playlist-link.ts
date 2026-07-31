@@ -16,8 +16,20 @@ import type { MusicProvider } from "@/app/generated/prisma/enums";
 export type ParsedPlaylistLink = {
   provider: MusicProvider;
   externalId: string;
-  /** Canonical URL we rebuild ourselves -- never the string the user pasted. */
+  /**
+   * For Spotify and YouTube, a canonical URL we rebuild from a validated id --
+   * never the string the user pasted. For AMAZON and OTHER there is no id to
+   * rebuild from, so it is the pasted URL with its fragment and credentials
+   * stripped, kept only because it is what the link must point at.
+   */
   externalUrl: string;
+  /**
+   * True when no public endpoint will tell us the title, so the user has to.
+   * Amazon Music publishes neither an API nor oEmbed, and its playlist pages
+   * redirect non-browser clients to a stub with no metadata; OTHER is by
+   * definition a service we know nothing about.
+   */
+  needsManualTitle: boolean;
 };
 
 /**
@@ -26,6 +38,8 @@ export type ParsedPlaylistLink = {
  */
 const SPOTIFY_ID = /^[A-Za-z0-9]{16,40}$/;
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{12,64}$/;
+/** Amazon uses ASINs for its own playlists and longer opaque ids for users'. */
+const AMAZON_ID = /^[A-Za-z0-9._-]{8,64}$/;
 
 /**
  * Extracts the provider and playlist id from a pasted link.
@@ -43,11 +57,19 @@ export function parsePlaylistLink(input: unknown): ParsedPlaylistLink | null {
   const uri = /^spotify:playlist:([A-Za-z0-9]+)$/.exec(raw);
   if (uri && SPOTIFY_ID.test(uri[1])) return spotifyLink(uri[1]);
 
+  // Anything carrying a scheme that isn't http(s) is rejected before the
+  // prepend below can mangle it into something valid-looking:
+  // "file:///etc/passwd" would otherwise become "https://file///etc/passwd",
+  // which parses cleanly and would be stored as a playlist link.
+  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(raw);
+  const isHttp = /^https?:\/\//i.test(raw);
+  if (hasScheme && !isHttp) return null;
+
   let url: URL;
   try {
     // A bare "open.spotify.com/..." paste has no scheme; assume https rather
     // than rejecting, since that is what the user meant.
-    url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    url = new URL(isHttp ? raw : `https://${raw}`);
   } catch {
     return null;
   }
@@ -78,7 +100,48 @@ export function parsePlaylistLink(input: unknown): ParsedPlaylistLink | null {
     return null;
   }
 
-  return null;
+  // Amazon Music runs on a per-country domain (music.amazon.co.uk, .de, .in).
+  if (/^music\.amazon\.[a-z.]{2,7}$/.test(host)) {
+    const segments = url.pathname.split("/").filter(Boolean);
+    // /playlists/{asin} for Amazon's own, /user-playlists/{id} for a user's.
+    const index = segments.findIndex(
+      (segment) => segment === "playlists" || segment === "user-playlists"
+    );
+    const id = index === -1 ? null : segments[index + 1];
+    if (!id || !AMAZON_ID.test(id)) return null;
+    return {
+      provider: "AMAZON",
+      externalId: id,
+      externalUrl: cleanUrl(url),
+      needsManualTitle: true,
+    };
+  }
+
+  // Anything else that is a plausible https link to a playlist somewhere. There
+  // is nothing to validate against, so the URL itself is the identity -- which
+  // is what stops the same link being added twice.
+  if (url.protocol !== "https:") return null;
+  const cleaned = cleanUrl(url);
+  if (cleaned.length > 512) return null;
+  return {
+    provider: "OTHER",
+    externalId: cleaned,
+    externalUrl: cleaned,
+    needsManualTitle: true,
+  };
+}
+
+/**
+ * Strips the fragment and any embedded credentials, and drops a trailing slash,
+ * so the same playlist pasted twice resolves to one identity. Query strings are
+ * kept: some services carry the playlist id there.
+ */
+function cleanUrl(url: URL): string {
+  url.hash = "";
+  url.username = "";
+  url.password = "";
+  const href = url.toString();
+  return href.endsWith("/") && url.pathname !== "/" ? href.slice(0, -1) : href;
 }
 
 function spotifyLink(externalId: string): ParsedPlaylistLink {
@@ -86,6 +149,7 @@ function spotifyLink(externalId: string): ParsedPlaylistLink {
     provider: "SPOTIFY",
     externalId,
     externalUrl: `https://open.spotify.com/playlist/${externalId}`,
+    needsManualTitle: false,
   };
 }
 
@@ -94,6 +158,7 @@ function youtubeLink(externalId: string): ParsedPlaylistLink {
     provider: "YOUTUBE",
     externalId,
     externalUrl: `https://www.youtube.com/playlist?list=${externalId}`,
+    needsManualTitle: false,
   };
 }
 
@@ -124,6 +189,13 @@ const RESOLVE_TIMEOUT_MS = 8000;
 export async function resolvePlaylistLink(
   link: ParsedPlaylistLink
 ): Promise<ResolvedPlaylist> {
+  // Callers must supply the title for these; there is nothing to ask.
+  if (link.needsManualTitle) {
+    throw new PlaylistLinkError(
+      "That service doesn't publish playlist details, so a title is required."
+    );
+  }
+
   // Built from `link.externalUrl`, which we constructed from a validated id --
   // not from anything the user typed.
   const endpoint =

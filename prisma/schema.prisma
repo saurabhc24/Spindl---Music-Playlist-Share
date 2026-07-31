@@ -114,9 +114,17 @@ model UsernameHistory {
   @@index([userId])
 }
 
+/// SPOTIFY and YOUTUBE can be connected over OAuth and imported from. AMAZON and
+/// OTHER cannot: Amazon Music publishes no third-party API and no oEmbed, and
+/// OTHER is whatever service a user pastes next. They exist so a playlist can
+/// still be listed by link with a title the user supplies. See
+/// ConnectableProvider in lib/providers -- the type system, not a convention,
+/// is what stops these two reaching the OAuth code paths.
 enum MusicProvider {
   SPOTIFY
   YOUTUBE
+  AMAZON
+  OTHER
 }
 
 model ConnectedAccount {

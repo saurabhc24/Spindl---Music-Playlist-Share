@@ -71,12 +71,36 @@ export async function addPlaylistLink(
   });
   if (existing) return { error: "That playlist is already on your page." };
 
-  let resolved;
-  try {
-    resolved = await resolvePlaylistLink(link);
-  } catch (error) {
-    if (error instanceof PlaylistLinkError) return { error: error.message };
-    throw error;
+  const typedTitle = String(formData.get("title") ?? "").trim().slice(0, 200);
+  const typedCover = String(formData.get("coverImageUrl") ?? "").trim();
+
+  let resolved: { title: string; coverImageUrl: string | null };
+  if (link.needsManualTitle) {
+    // Amazon Music and everything under OTHER publish nothing we can read, so
+    // the user is the only source for a title. Refusing the link entirely would
+    // be worse: the card only needs a name and a URL, and they have both.
+    if (!typedTitle) {
+      return { error: "Add a title for this playlist — we can't read it from that service." };
+    }
+    resolved = { title: typedTitle, coverImageUrl: null };
+  } else {
+    try {
+      resolved = await resolvePlaylistLink(link);
+    } catch (error) {
+      if (error instanceof PlaylistLinkError) return { error: error.message };
+      throw error;
+    }
+    // A typed title still wins, so a badly-named playlist can be relabelled at
+    // the moment of adding rather than requiring an edit afterwards.
+    if (typedTitle) resolved = { ...resolved, title: typedTitle };
+  }
+
+  // Only https: this lands in an <img src> on a public page, so a javascript:
+  // or data: value has no business here. Same rule the oEmbed path applies.
+  if (typedCover && /^https:\/\//i.test(typedCover) && typedCover.length <= 2048) {
+    resolved = { ...resolved, coverImageUrl: typedCover };
+  } else if (typedCover) {
+    return { error: "The cover image must be an https:// image URL." };
   }
 
   const highest = await prisma.playlist.aggregate({

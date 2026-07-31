@@ -1,10 +1,20 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 
 import { parsePlaylistLink } from "@/lib/playlist-link";
 
 import { addPlaylistLink, type AddLinkState } from "./actions";
+
+const PROVIDER_NAMES: Record<string, string> = {
+  SPOTIFY: "Spotify",
+  YOUTUBE: "YouTube",
+  AMAZON: "Amazon Music",
+  OTHER: "that link",
+};
+
+const inputClass =
+  "w-full rounded-lg border border-zinc-300 bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-300";
 
 export function AddLinkForm() {
   const [state, action, pending] = useActionState<AddLinkState, FormData>(
@@ -12,22 +22,31 @@ export function AddLinkForm() {
     undefined
   );
   const [value, setValue] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
+  const [title, setTitle] = useState("");
+  const [cover, setCover] = useState("");
 
-  // The same parser the server uses, so an unrecognised link is called out
-  // before a round-trip. It is only feedback -- the server re-parses regardless.
+  // The same parser the server uses, so the form knows what a link is before a
+  // round-trip. It is only feedback -- the server re-parses regardless.
   const trimmed = value.trim();
   const parsed = trimmed ? parsePlaylistLink(trimmed) : null;
   const looksInvalid = trimmed.length > 8 && !parsed;
 
+  // Spotify and YouTube tell us the title; Amazon and everything else cannot,
+  // so the fields only appear when they are actually needed.
+  const needsTitle = parsed?.needsManualTitle ?? false;
+  const canSubmit = Boolean(parsed) && (!needsTitle || title.trim().length > 0);
+
+  function reset() {
+    setValue("");
+    setTitle("");
+    setCover("");
+  }
+
   return (
     <form
-      ref={formRef}
       action={async (formData) => {
         await action(formData);
-        // Clearing on submit would lose the text if the add failed, so it is
-        // cleared here and only when the input is genuinely a playlist link.
-        if (parsed) setValue("");
+        if (parsed) reset();
       }}
       className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
     >
@@ -35,8 +54,8 @@ export function AddLinkForm() {
         Add a playlist by link
       </label>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        Paste any public Spotify or YouTube playlist URL. No account connection
-        needed.
+        Paste a public Spotify, YouTube or Amazon Music playlist URL — or any
+        other playlist link. No account connection needed.
       </p>
 
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -45,20 +64,47 @@ export function AddLinkForm() {
           name="url"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="https://open.spotify.com/playlist/..."
+          placeholder="https://music.amazon.com/playlists/..."
           autoComplete="off"
           spellCheck={false}
           aria-invalid={looksInvalid || undefined}
-          className="w-full rounded-lg border border-zinc-300 bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-300"
+          className={inputClass}
         />
         <button
           type="submit"
-          disabled={pending || !parsed}
+          disabled={pending || !canSubmit}
           className="shrink-0 rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:hover:bg-zinc-200"
         >
           {pending ? "Adding..." : "Add"}
         </button>
       </div>
+
+      {needsTitle && (
+        <div className="mt-3 space-y-2 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            {PROVIDER_NAMES[parsed!.provider] ?? "That service"} doesn&apos;t
+            publish playlist details, so name it yourself.
+          </p>
+          <input
+            name="title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Playlist name"
+            maxLength={200}
+            autoComplete="off"
+            className={inputClass}
+          />
+          <input
+            name="coverImageUrl"
+            value={cover}
+            onChange={(event) => setCover(event.target.value)}
+            placeholder="Cover image URL (optional, https://...)"
+            autoComplete="off"
+            spellCheck={false}
+            className={inputClass}
+          />
+        </div>
+      )}
 
       <p
         role="status"
@@ -73,9 +119,9 @@ export function AddLinkForm() {
       >
         {state?.error ??
           (looksInvalid
-            ? "That doesn't look like a Spotify or YouTube playlist link."
+            ? "That doesn't look like a playlist link."
             : parsed
-              ? `Looks like a ${parsed.provider === "SPOTIFY" ? "Spotify" : "YouTube"} playlist.`
+              ? `Looks like a ${PROVIDER_NAMES[parsed.provider] ?? "playlist"} link.`
               : (state?.success ?? ""))}
       </p>
     </form>

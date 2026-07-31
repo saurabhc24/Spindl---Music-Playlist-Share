@@ -6,22 +6,36 @@ import { spotify, isSpotifyConfigured } from "./spotify";
 import { youtube, isYouTubeConfigured } from "./youtube";
 import type { ProviderClient } from "./types";
 
-export const PROVIDERS: Record<MusicProvider, ProviderClient> = {
+/**
+ * Only the providers that can actually be connected and imported from.
+ *
+ * Deliberately NOT `Record<MusicProvider, ProviderClient>`. The enum also holds
+ * AMAZON and OTHER, which exist purely so a playlist can be listed by link --
+ * they have no API, so no client can be written for them. Typing this as a
+ * complete record would force a fake entry for each; typing it as Partial would
+ * push a null check into every OAuth call site. Deriving the key type from the
+ * object instead means the compiler rejects an unconnectable provider reaching
+ * `getAuthorizationUrl` at all, rather than us remembering to guard.
+ */
+export const PROVIDERS = {
   SPOTIFY: spotify,
   YOUTUBE: youtube,
-};
+} as const satisfies Partial<Record<MusicProvider, ProviderClient>>;
+
+/** A provider with OAuth and an import path -- a strict subset of MusicProvider. */
+export type ConnectableProvider = keyof typeof PROVIDERS;
 
 /** Maps the `[provider]` URL segment (e.g. "spotify") to the enum value. */
-export function parseProviderSlug(slug: string): MusicProvider | null {
+export function parseProviderSlug(slug: string): ConnectableProvider | null {
   const normalized = slug.toUpperCase();
-  return normalized in PROVIDERS ? (normalized as MusicProvider) : null;
+  return normalized in PROVIDERS ? (normalized as ConnectableProvider) : null;
 }
 
 export function providerSlug(provider: MusicProvider) {
   return provider.toLowerCase();
 }
 
-export function isProviderConfigured(provider: MusicProvider) {
+export function isProviderConfigured(provider: ConnectableProvider) {
   return provider === "SPOTIFY" ? isSpotifyConfigured() : isYouTubeConfigured();
 }
 

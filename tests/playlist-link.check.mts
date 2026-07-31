@@ -60,17 +60,65 @@ check(
     ?.externalUrl === `https://www.youtube.com/playlist?list=${YT_ID}`
 );
 
+console.log("\nAmazon Music (no API, no oEmbed -- title must come from the user)");
+const AMZ = "B07QK2LH4H";
+for (const [label, input] of [
+  ["playlist URL", `https://music.amazon.com/playlists/${AMZ}`],
+  ["a user playlist", `https://music.amazon.com/user-playlists/${AMZ}`],
+  ["a regional domain", `https://music.amazon.co.uk/playlists/${AMZ}`],
+  ["with tracking params", `https://music.amazon.in/playlists/${AMZ}?ref=dm_sh_abc`],
+] as const) {
+  const parsed = parsePlaylistLink(input);
+  check(
+    label,
+    parsed?.provider === "AMAZON" && parsed.externalId === AMZ && parsed.needsManualTitle,
+    JSON.stringify(parsed)
+  );
+}
+
+console.log("\nAnything else becomes OTHER");
+for (const [label, input] of [
+  ["Apple Music", "https://music.apple.com/us/playlist/chill-mix/pl.abc123"],
+  ["Tidal", "https://tidal.com/browse/playlist/abc-123"],
+  ["SoundCloud", "https://soundcloud.com/someone/sets/late-night"],
+] as const) {
+  const parsed = parsePlaylistLink(input);
+  check(
+    label,
+    parsed?.provider === "OTHER" && parsed.needsManualTitle,
+    JSON.stringify(parsed)
+  );
+}
+
+check(
+  "a known provider is never downgraded to OTHER",
+  parsePlaylistLink(`https://open.spotify.com/playlist/${SPOTIFY_ID}`)?.provider === "SPOTIFY"
+);
+check(
+  "Spotify and YouTube never demand a manual title",
+  parsePlaylistLink(`https://open.spotify.com/playlist/${SPOTIFY_ID}`)?.needsManualTitle === false &&
+    parsePlaylistLink(`https://www.youtube.com/playlist?list=${YT_ID}`)?.needsManualTitle === false
+);
+check(
+  "the fragment is stripped so one playlist has one identity",
+  parsePlaylistLink("https://tidal.com/browse/playlist/abc-123#anchor")?.externalId ===
+    parsePlaylistLink("https://tidal.com/browse/playlist/abc-123")?.externalId
+);
+check(
+  "embedded credentials are stripped from an OTHER url",
+  !(parsePlaylistLink("https://user:pass@tidal.com/browse/playlist/abc")?.externalUrl ?? "").includes("pass")
+);
+
 console.log("\nRejected");
 for (const [label, input] of [
   ["empty string", ""],
   ["not a URL", "just some text"],
+  // A known host with no playlist in it is rejected outright rather than
+  // falling through to OTHER -- we know what these are, and they aren't one.
   ["a non-playlist Spotify link", `https://open.spotify.com/track/${SPOTIFY_ID}`],
   ["an album link", `https://open.spotify.com/album/${SPOTIFY_ID}`],
   ["a bare YouTube video", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
-  ["an unrelated host", "https://example.com/playlist/abc123def456ghi789"],
-  // The host is checked exactly, so a lookalike domain cannot pass as Spotify.
-  ["a lookalike host", `https://open.spotify.com.evil.test/playlist/${SPOTIFY_ID}`],
-  ["a subdomain-prefixed lookalike", `https://evil.test/open.spotify.com/playlist/${SPOTIFY_ID}`],
+  ["an Amazon Music home link", "https://music.amazon.com/home"],
   ["javascript: scheme", "javascript:alert(1)"],
   ["data: URL", "data:text/html,<script>alert(1)</script>"],
   ["file: scheme", "file:///etc/passwd"],
@@ -86,6 +134,22 @@ check(
   "rejects an absurdly long input without evaluating it",
   parsePlaylistLink(`https://open.spotify.com/playlist/${"a".repeat(5000)}`) === null
 );
+
+// Unknown hosts now become OTHER rather than being rejected, so "not rejected"
+// is no longer the interesting property -- "not mistaken for the real thing" is.
+console.log("\nImpersonation");
+for (const [label, input] of [
+  ["a lookalike domain", `https://open.spotify.com.evil.test/playlist/${SPOTIFY_ID}`],
+  ["a host with the real one in its path", `https://evil.test/open.spotify.com/playlist/${SPOTIFY_ID}`],
+  ["an Amazon lookalike", `https://music.amazon.evil.test/playlists/${AMZ}`],
+] as const) {
+  const parsed = parsePlaylistLink(input);
+  check(
+    `${label} is never attributed to the real provider`,
+    parsed === null || parsed.provider === "OTHER",
+    JSON.stringify(parsed)
+  );
+}
 
 console.log(
   failures === 0 ? "\nAll playlist-link checks passed." : `\n${failures} check(s) FAILED.`

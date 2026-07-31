@@ -1,15 +1,21 @@
-import type { MusicProvider } from "@/app/generated/prisma/enums";
 import { ProviderIcon, providerLabel } from "@/components/provider-badge";
 import { requireProfile } from "@/lib/dal";
-import { isProviderConfigured, providerSlug } from "@/lib/providers";
+import {
+  isProviderConfigured,
+  providerSlug,
+  type ConnectableProvider,
+} from "@/lib/providers";
 import { prisma } from "@/lib/prisma";
 import { syncFailureHint } from "@/lib/sync-status";
 
 import { ConnectionActions } from "./connection-actions";
 
-const PROVIDER_ORDER: MusicProvider[] = ["SPOTIFY", "YOUTUBE"];
+// Only the providers that can actually be connected. Amazon Music and OTHER are
+// link-only -- they belong on the Playlists page, not here, because there is
+// nothing to authorize.
+const PROVIDER_ORDER: ConnectableProvider[] = ["SPOTIFY", "YOUTUBE"];
 
-const PROVIDER_BLURBS: Record<MusicProvider, string> = {
+const PROVIDER_BLURBS: Record<ConnectableProvider, string> = {
   SPOTIFY: "Import the playlists you've created and follow on Spotify.",
   // Deliberately says "YouTube", not "YouTube Music" -- there's no official
   // YouTube Music API, though YT Music playlists do surface through this one.

@@ -103,7 +103,7 @@ async function main() {
     makeItem("p2", "Gym", 55),
   ]);
 
-  const first = await syncProvider({ userId: user.id, connection });
+  const first = await syncProvider({ userId: user.id, connection: { ...connection, provider: "SPOTIFY" } });
 
   check("refreshes an expired access token", refreshCalls === 1, `(calls=${refreshCalls})`);
   check("imports both playlists", first.imported === 2 && first.added === 2, JSON.stringify(first));
@@ -137,7 +137,7 @@ async function main() {
     makeItem("p3", "Late night", 8),
   ]);
 
-  const second = await syncProvider({ userId: user.id, connection: refreshed });
+  const second = await syncProvider({ userId: user.id, connection: { ...refreshed, provider: "SPOTIFY" } });
   check("second sync reports 1 new + 1 stale", second.added === 1 && second.markedStale === 1, JSON.stringify(second));
 
   const p1 = await prisma.playlist.findFirstOrThrow({
@@ -165,7 +165,7 @@ async function main() {
     makeItem("p2", "Gym", 55),
     makeItem("p3", "Late night", 8),
   ]);
-  await syncProvider({ userId: user.id, connection: refreshed2 });
+  await syncProvider({ userId: user.id, connection: { ...refreshed2, provider: "SPOTIFY" } });
 
   const p2Back = await prisma.playlist.findFirstOrThrow({
     where: { userId: user.id, externalId: "p2" },

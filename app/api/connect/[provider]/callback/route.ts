@@ -52,11 +52,17 @@ export async function GET(
     );
   }
 
+  // Connecting and importing are reported separately on purpose. They used to
+  // share one try/catch, so a provider that authorized fine but refused the
+  // playlist read -- Spotify without Premium on the app owner, an exhausted
+  // YouTube quota -- sent the user back to reconnect an account that was
+  // already linked, and no amount of retrying could clear the message.
+  let connection;
   try {
     const client = PROVIDERS[provider];
     const tokens = await client.exchangeCode(code);
 
-    const connection = await prisma.connectedAccount.upsert({
+    connection = await prisma.connectedAccount.upsert({
       where: { userId_provider: { userId: user.id, provider } },
       create: {
         userId: user.id,
@@ -78,16 +84,26 @@ export async function GET(
       },
     });
 
-    // Pull playlists immediately so the dashboard isn't empty after connecting.
-    await syncProvider({ userId: user.id, connection });
-
-    return NextResponse.redirect(
-      connectionsUrl({ connected: slug })
-    );
   } catch (error) {
-    console.error(`[connect:${slug}] callback failed`, error);
+    console.error(`[connect:${slug}] token exchange failed`, error);
     return NextResponse.redirect(
       connectionsUrl({ error: "exchange_failed", provider: slug })
     );
   }
+
+  // Past this point the account IS connected and its tokens are stored, so any
+  // failure below is an import problem, not a connection problem.
+  try {
+    // Pull playlists immediately so the dashboard isn't empty after connecting.
+    await syncProvider({ userId: user.id, connection });
+  } catch (error) {
+    // syncProvider has already recorded the provider's own reason in
+    // lastSyncStatus, which the connections page turns into a specific hint.
+    console.error(`[connect:${slug}] first import failed`, error);
+    return NextResponse.redirect(
+      connectionsUrl({ connected: slug, error: "import_failed", provider: slug })
+    );
+  }
+
+  return NextResponse.redirect(connectionsUrl({ connected: slug }));
 }

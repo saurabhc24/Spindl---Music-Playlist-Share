@@ -20,9 +20,34 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_state: "That connection link expired. Please try again.",
   missing_code: "The service didn't return an authorization code. Try again.",
   exchange_failed: "We couldn't complete the connection. Please try again.",
+  // The account linked fine; only the first playlist read failed. Saying
+  // "couldn't connect" here would send the user off to reconnect something that
+  // is already connected, which no amount of retrying can fix.
+  import_failed:
+    "Connected, but we couldn't import your playlists yet — see the reason below.",
   not_configured:
     "This service isn't configured yet. Add its API credentials to your environment.",
 };
+
+/**
+ * Turns the stored lastSyncStatus into something the user can act on.
+ *
+ * The raw value is the provider's own error text, which is too noisy to show
+ * verbatim but does carry the one fact that matters: whether this is worth
+ * retrying, worth reconnecting, or nothing the user can fix at all.
+ */
+function syncFailureHint(status: string): string {
+  if (/premium/i.test(status)) {
+    return "Spotify only returns playlists when the account that owns the API app has Premium. Nothing you can fix from here — the connection itself is fine.";
+  }
+  if (/quota|rate.?limit/i.test(status)) {
+    return "The service is rate-limiting us or is out of daily quota. Try again later.";
+  }
+  if (/revoked|expired|reconnect/i.test(status)) {
+    return "The connection expired or was revoked. Reconnect the account.";
+  }
+  return "Last sync failed. Try syncing again, or reconnect the account.";
+}
 
 export default async function ConnectionsPage(
   props: PageProps<"/dashboard/connections">
@@ -109,9 +134,8 @@ export default async function ConnectionsPage(
                   )}
 
                   {connection?.lastSyncStatus?.startsWith("error") && (
-                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                      Last sync failed. Try syncing again, or reconnect the
-                      account.
+                    <p className="mt-2 max-w-md text-xs text-amber-600 dark:text-amber-400">
+                      {syncFailureHint(connection.lastSyncStatus)}
                     </p>
                   )}
 

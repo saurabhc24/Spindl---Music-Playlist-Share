@@ -207,6 +207,18 @@ check(
   String(youtubeEmbed?.src)
 );
 
+// YouTube pads whatever box it is given to its own 16:9, so a frame of any
+// other shape draws a second set of bars around the first -- which is what made
+// an art track's still sleeve read as a video window rather than a cover.
+check(
+  "the YouTube frame matches YouTube's own ratio",
+  youtubeEmbed?.aspectRatio === "16 / 9"
+);
+check(
+  "Spotify keeps a fixed height, being a list rather than a picture",
+  spotifyEmbed?.aspectRatio === null && spotifyEmbed?.height === 352
+);
+
 check("Amazon has no player", playlistEmbed("AMAZON", AMZ) === null);
 check(
   "OTHER has no player",

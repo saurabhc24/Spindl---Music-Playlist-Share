@@ -21,7 +21,17 @@ const EMBED_HEIGHT = { SPOTIFY: 352, YOUTUBE: 200 } as const;
 
 export type PlaylistEmbed = {
   src: string;
+  /** Fixed frame height, for players that are a list rather than a picture. */
   height: number;
+  /**
+   * Set where the player has a native aspect ratio, so the frame can match it.
+   *
+   * YouTube renders 16:9 internally and pads whatever box it is given, so a
+   * frame of any other shape adds a second set of bars around the first. Most
+   * YouTube Music songs are "art tracks" -- a still cover with audio -- and the
+   * padding is what made those read as a video window rather than a sleeve.
+   */
+  aspectRatio: string | null;
   /** What a visitor without a subscription actually hears, stated plainly. */
   note: string;
 };
@@ -43,6 +53,8 @@ export function playlistEmbed(
       // theme=0 is the dark player, which is the only one that sits in this scene.
       src: `https://open.spotify.com/embed/playlist/${externalId}?theme=0`,
       height: EMBED_HEIGHT.SPOTIFY,
+      // A scrolling track list, not a picture -- it wants a fixed height.
+      aspectRatio: null,
       note: "30-second previews — sign in to Spotify for full tracks",
     };
   }
@@ -52,6 +64,7 @@ export function playlistEmbed(
     return {
       src: `https://www.youtube.com/embed/videoseries?list=${externalId}`,
       height: EMBED_HEIGHT.YOUTUBE,
+      aspectRatio: "16 / 9",
       note: "Full tracks, played from YouTube",
     };
   }

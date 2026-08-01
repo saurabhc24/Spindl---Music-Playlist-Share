@@ -354,16 +354,23 @@ export function PlayerOverlay({
       >
         {embed ? (
           <>
+            {/* Matching YouTube's own 16:9 removes the bars we were adding
+                around the bars it already draws, so an art track's sleeve fills
+                the frame instead of floating in a letterbox. Spotify's player is
+                a list, so it keeps a fixed height. */}
             <div
-              style={{
-                borderRadius: 14,
-                overflow: "hidden",
-                boxShadow: "0 18px 40px rgba(0,0,0,0.55)",
-                background: "oklch(0.16 0.01 66)",
-              }}
+              className="embed-frame"
+              style={
+                embed.aspectRatio
+                  ? { aspectRatio: embed.aspectRatio, width: "100%" }
+                  : { minHeight: embed.height }
+              }
             >
               {/* The provider's API replaces this with its own iframe. */}
-              <div ref={hostRef} style={{ minHeight: embed.height }} />
+              <div
+                ref={hostRef}
+                style={{ width: "100%", height: embed.aspectRatio ? "100%" : undefined }}
+              />
             </div>
             <p
               style={{

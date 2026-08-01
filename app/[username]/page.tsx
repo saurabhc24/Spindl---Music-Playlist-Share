@@ -1,29 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Instrument_Serif, Manrope } from "next/font/google";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { showcaseFonts } from "@/app/fonts";
 import { absoluteUrl, displayUrl } from "@/lib/app-url";
 import { getPublicProfile, getRenamedProfileTarget } from "@/lib/profile";
 import { normalizeUsername } from "@/lib/username";
 import { providerLabel } from "@/components/provider-badge";
 
 import { Showcase, type Shelf } from "./showcase";
-
-// Scoped to this route rather than the root layout: the dashboard and marketing
-// pages use Geist, and these two are only ever painted here.
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-instrument-serif",
-  display: "swap",
-});
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-manrope",
-  display: "swap",
-});
 
 /**
  * A shelf holds at most this many playlists.
@@ -132,7 +117,7 @@ export default async function PublicProfilePage(
 
   if (shelves.length > 0) {
     return (
-      <div className={`${instrumentSerif.variable} ${manrope.variable} flex-1`}>
+      <div className={`${showcaseFonts} flex-1`}>
         <Showcase
           displayName={displayName}
           handle={`@${profile.username}`}
@@ -151,7 +136,7 @@ export default async function PublicProfilePage(
   // build, and an empty rack reads as broken rather than as "nothing here yet".
   return (
     <div
-      className={`${instrumentSerif.variable} ${manrope.variable} flex w-full flex-1 justify-center`}
+      className={`${showcaseFonts} flex w-full flex-1 justify-center`}
       style={{ background: "#060504" }}
     >
       <div

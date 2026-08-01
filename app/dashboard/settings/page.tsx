@@ -17,8 +17,8 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-xl space-y-10">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="serif text-3xl">Settings</h1>
+        <p className="mt-2 text-sm text-ink-dim">
           How your page introduces you.
         </p>
       </header>
@@ -31,7 +31,7 @@ export default async function SettingsPage() {
         />
       </section>
 
-      <hr className="border-zinc-200 dark:border-zinc-800" />
+      <hr className="border-[var(--line)]" />
 
       <section className="space-y-4">
         <UsernameSection
@@ -40,15 +40,15 @@ export default async function SettingsPage() {
         />
 
         {previousUsernames.length > 0 && (
-          <div className="rounded-lg bg-zinc-50 px-4 py-3 dark:bg-zinc-900">
-            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <div className="panel px-4 py-3">
+            <p className="text-xs font-medium text-ink-dim">
               Previous links, still redirecting here
             </p>
             <ul className="mt-2 space-y-1">
               {previousUsernames.map((entry) => (
                 <li
                   key={entry.usernameNormalized}
-                  className="text-xs text-zinc-500 dark:text-zinc-400"
+                  className="text-xs text-ink-faint"
                 >
                   /{entry.usernameNormalized}
                 </li>

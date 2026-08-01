@@ -4,7 +4,7 @@ import "dotenv/config";
 // live database (DATABASE_URL); everything else is pure.
 //   npx tsx --conditions=react-server tests/username.check.mts
 
-const { validateUsername, normalizeUsername, isReservedUsername } = await import(
+const { validateUsername, normalizeUsername } = await import(
   "../lib/username"
 );
 const { PrismaClient } = await import("../app/generated/prisma/client");
@@ -100,7 +100,13 @@ check(
   "Scunthorpe check"
 );
 check("does not reject a normal name", accepts("saurabh"));
-check("isReservedUsername agrees", isReservedUsername("Admin") && !isReservedUsername("saurabh"));
+// Reserved-ness is only ever consulted through validateUsername, which is the
+// single path every caller takes, so that is what gets asserted.
+check(
+  "reservation is reported through validateUsername",
+  (validateUsername("Admin") as { error?: string }).error === "reserved" &&
+    validateUsername("saurabh").ok
+);
 
 // --- display form preserved --------------------------------------------------
 

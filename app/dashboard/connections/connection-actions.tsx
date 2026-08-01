@@ -48,7 +48,7 @@ export function ConnectionActions({
     return (
       <a
         href={`/api/connect/${slug}`}
-        className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-zinc-700 dark:hover:bg-zinc-200"
+        className="btn-gold"
       >
         Connect
       </a>
@@ -64,7 +64,7 @@ export function ConnectionActions({
           type="button"
           disabled={disabled}
           onClick={() => post(`/api/sync/${slug}`, "sync")}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className="btn-ghost"
         >
           {busy === "sync" ? "Syncing..." : "Sync now"}
         </button>
@@ -80,13 +80,13 @@ export function ConnectionActions({
               post(`/api/connect/${slug}/disconnect`, "disconnect");
             }
           }}
-          className="rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:text-red-600 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-red-400"
+          className="rounded-lg px-3 py-2 text-sm text-ink-faint transition-colors hover:text-[var(--danger)] disabled:opacity-50"
         >
           {busy === "disconnect" ? "Removing..." : "Disconnect"}
         </button>
       </div>
       {message && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{message}</p>
+        <p className="text-xs text-ink-faint">{message}</p>
       )}
     </div>
   );

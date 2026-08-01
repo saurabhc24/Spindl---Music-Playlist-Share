@@ -20,7 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 // Shared so a second OAuth button can't drift from the first.
 const OAUTH_BUTTON_CLASS =
-  "flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900";
+  "btn-ghost w-full !py-3";
 
 export default async function LoginPage(props: PageProps<"/login">) {
   const session = await auth();
@@ -50,27 +50,27 @@ export default async function LoginPage(props: PageProps<"/login">) {
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="text-sm text-zinc-500 transition-colors hover:text-foreground dark:text-zinc-400"
+          className="text-sm text-ink-faint transition-colors hover:text-ink"
         >
           &larr; Back
         </Link>
 
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Sign in</h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="serif mt-6 text-3xl">Sign in</h1>
+        <p className="mt-2 text-sm text-ink-dim">
           Build your Spindl in under a minute.
         </p>
 
         {errorMessage && (
           <p
             role="alert"
-            className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+            className="mt-6 note note-error"
           >
             {errorMessage}
           </p>
         )}
 
         {!oauthEnabled && !emailEnabled && (
-          <p className="mt-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+          <p className="mt-8 note note-warn">
             No sign-in method is configured yet. Set{" "}
             <code className="font-mono text-xs">GOOGLE_CLIENT_ID</code> and{" "}
             <code className="font-mono text-xs">GOOGLE_CLIENT_SECRET</code>,{" "}
@@ -136,11 +136,11 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
         {oauthEnabled && emailEnabled && (
           <div className="my-6 flex items-center gap-4">
-            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-            <span className="text-xs uppercase tracking-wide text-zinc-400">
+            <span className="h-px flex-1 bg-[var(--panel)] " />
+            <span className="text-xs uppercase tracking-wide text-ink-faint">
               or
             </span>
-            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+            <span className="h-px flex-1 bg-[var(--panel)] " />
           </div>
         )}
 
@@ -172,11 +172,11 @@ export default async function LoginPage(props: PageProps<"/login">) {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-zinc-300 bg-transparent px-4 py-3 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-300"
+            className="field"
           />
           <button
             type="submit"
-            className="w-full rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background transition-colors hover:bg-zinc-700 dark:hover:bg-zinc-200"
+            className="btn-gold w-full !py-3"
           >
             Email me a sign-in link
           </button>

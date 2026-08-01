@@ -119,14 +119,14 @@ export default async function AdminPage(props: PageProps<"/admin">) {
     <div className="mx-auto w-full max-w-4xl px-6 py-10">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Admin</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <h1 className="serif text-3xl">Admin</h1>
+          <p className="mt-1 text-sm text-ink-dim">
             Moderation and site overview.
           </p>
         </div>
         <Link
           href="/dashboard"
-          className="text-sm text-zinc-500 transition-colors hover:text-foreground dark:text-zinc-400"
+          className="text-sm text-ink-faint transition-colors hover:text-ink"
         >
           Back to dashboard
         </Link>
@@ -146,17 +146,17 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           name="q"
           defaultValue={query}
           placeholder="Search username, name or email"
-          className="w-full rounded-lg border border-zinc-300 bg-transparent px-4 py-2.5 text-sm outline-none placeholder:text-zinc-400 focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-300"
+          className="field"
         />
         <button
           type="submit"
-          className="rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className="btn-ghost"
         >
           Search
         </button>
       </form>
 
-      <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mt-6 text-sm text-ink-faint">
         {matching} profile{matching === 1 ? "" : "s"}
         {query ? ` matching "${query}"` : ""}
       </p>
@@ -166,7 +166,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           <ProfileRow key={profile.id} profile={profile} />
         ))}
         {rows.length === 0 && (
-          <li className="rounded-xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          <li className="rounded-xl border border-dashed border-[var(--line)] px-6 py-10 text-center text-sm text-ink-faint">
             No profiles found.
           </li>
         )}
@@ -177,7 +177,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           <PageLink page={page - 1} query={query} disabled={page <= 1}>
             &larr; Previous
           </PageLink>
-          <span className="text-zinc-500 dark:text-zinc-400">
+          <span className="text-ink-faint">
             Page {page} of {totalPages}
           </span>
           <PageLink page={page + 1} query={query} disabled={page >= totalPages}>
@@ -199,11 +199,11 @@ function Stat({
   tone?: "warn";
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 px-4 py-3 dark:border-zinc-800">
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">{label}</p>
+    <div className="panel px-4 py-3">
+      <p className="text-xs text-ink-dim">{label}</p>
       <p
         className={`mt-1 text-xl font-semibold tabular-nums ${
-          tone === "warn" ? "text-amber-600 dark:text-amber-400" : ""
+          tone === "warn" ? "text-[var(--warn)]" : ""
         }`}
       >
         {value}
@@ -224,7 +224,7 @@ function PageLink({
   children: React.ReactNode;
 }) {
   if (disabled) {
-    return <span className="text-zinc-300 dark:text-zinc-700">{children}</span>;
+    return <span className="text-ink-faint opacity-50">{children}</span>;
   }
   const params = new URLSearchParams();
   if (query) params.set("q", query);
@@ -232,7 +232,7 @@ function PageLink({
   return (
     <Link
       href={`/admin?${params}`}
-      className="text-zinc-600 transition-colors hover:text-foreground dark:text-zinc-400"
+      className="text-ink-dim transition-colors hover:text-ink"
     >
       {children}
     </Link>

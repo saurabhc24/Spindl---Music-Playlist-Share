@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { showcaseFonts } from "@/app/fonts";
 import { displayUrl } from "@/lib/app-url";
 
 /**
@@ -17,9 +16,6 @@ import { displayUrl } from "@/lib/app-url";
  * same for free.
  */
 
-const SCENE_BACKGROUND =
-  "radial-gradient(120% 80% at 50% -6%, oklch(0.24 0.02 70) 0%, oklch(0.16 0.015 65) 32%, oklch(0.09 0.01 60) 66%, #060504 100%)";
-
 /**
  * Stand-ins for the shelf, not claims about anyone's library. The hues are fixed
  * rather than derived so the composition is stable and reads as designed.
@@ -34,12 +30,7 @@ export default function Home() {
   return (
     <div
       data-shelf-scene
-      className={`${showcaseFonts} relative flex flex-1 flex-col overflow-hidden`}
-      style={{
-        background: SCENE_BACKGROUND,
-        fontFamily: "var(--font-manrope), sans-serif",
-        color: "oklch(0.94 0.01 85)",
-      }}
+      className="scene relative flex flex-1 flex-col overflow-hidden"
     >
       <div
         aria-hidden="true"
@@ -52,16 +43,10 @@ export default function Home() {
       />
 
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-5">
-        <span
-          className="text-lg"
-          style={{ fontFamily: "var(--font-instrument-serif), serif" }}
-        >
-          Spindl
-        </span>
+        <span className="serif text-lg">Spindl</span>
         <Link
           href="/login"
-          className="text-sm font-semibold transition-opacity hover:opacity-80"
-          style={{ color: "oklch(0.86 0.08 82)" }}
+          className="text-sm font-semibold text-accent transition-opacity hover:opacity-80"
         >
           Sign in
         </Link>
@@ -69,26 +54,19 @@ export default function Home() {
 
       <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-6 pb-10 text-center">
         <p
-          className="text-[11px] font-semibold uppercase"
-          style={{ letterSpacing: "0.18em", color: "oklch(0.66 0.04 82)" }}
+          className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/70"
         >
           One link, everything you play
         </p>
 
         <h1
-          className="mt-5 max-w-2xl text-[42px] leading-[1.05] sm:text-6xl"
-          style={{
-            fontFamily: "var(--font-instrument-serif), serif",
-            fontWeight: 400,
-            letterSpacing: "0.4px",
-          }}
+          className="serif mt-5 max-w-2xl text-[42px] leading-[1.05] tracking-[0.4px] sm:text-6xl"
         >
           Everything you&apos;ve got spinning
         </h1>
 
         <p
-          className="mt-5 max-w-lg text-[15px] leading-relaxed sm:text-base"
-          style={{ color: "oklch(0.74 0.02 82)" }}
+          className="mt-5 max-w-lg text-[15px] leading-relaxed text-ink-dim sm:text-base"
         >
           Put your favourite Spotify, YouTube and Amazon Music playlists on a
           shelf worth showing off — and share the whole thing with one link.
@@ -97,23 +75,15 @@ export default function Home() {
         <div className="mt-9 flex flex-col items-center gap-4">
           <Link
             href="/login"
-            className="rounded-full px-7 py-3.5 text-sm font-bold transition-transform hover:-translate-y-0.5"
-            style={{
-              color: "#151210",
-              background:
-                "linear-gradient(180deg, oklch(0.92 0.07 86), oklch(0.82 0.09 80))",
-              boxShadow:
-                "0 10px 26px oklch(0.75 0.09 78 / 0.35), inset 0 1px 0 rgba(255,255,255,0.5)",
-            }}
+            className="btn-gold !px-7 !py-3.5 !text-sm"
           >
             Claim your link
           </Link>
-          <p className="text-xs" style={{ color: "oklch(0.6 0.02 80)" }}>
+          <p className="text-xs text-ink-faint">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold underline underline-offset-4"
-              style={{ color: "oklch(0.86 0.08 82)" }}
+              className="font-semibold text-accent underline underline-offset-4"
             >
               Sign in
             </Link>
@@ -124,16 +94,13 @@ export default function Home() {
       </main>
 
       <footer
-        className="relative z-10 flex items-center justify-center gap-2 px-6 pb-7 text-xs"
-        style={{ color: "oklch(0.5 0.015 78)" }}
+        className="relative z-10 flex items-center justify-center gap-2 px-6 pb-7 text-xs text-ink-faint"
       >
         <span aria-hidden="true">🔗</span>
         {/* Read from NEXT_PUBLIC_APP_URL rather than written down here, so a
             domain move doesn't leave the landing page advertising a dead host --
             which is exactly what happened to the last hardcoded copy. */}
-        <span style={{ fontWeight: 600, color: "oklch(0.72 0.05 84)" }}>
-          {displayUrl("/yourname")}
-        </span>
+        <span className="font-semibold text-accent/80">{displayUrl("/yourname")}</span>
       </footer>
     </div>
   );
@@ -201,12 +168,7 @@ function ShelfPreview() {
                 }}
               />
               <div
-                className="absolute left-3 top-2 text-[34px] leading-none sm:text-[50px]"
-                style={{
-                  fontFamily: "var(--font-instrument-serif), serif",
-                  color: "rgba(255,255,255,0.92)",
-                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
-                }}
+                className="serif absolute left-3 top-2 text-[34px] leading-none text-white/90 [text-shadow:0_2px_12px_rgba(0,0,0,0.3)] sm:text-[50px]"
               >
                 {cover.mark}
               </div>
@@ -237,11 +199,7 @@ function ShelfPreview() {
 
             <div className="mt-2 flex flex-col items-center gap-1.5">
               <div
-                className="text-[13px] leading-tight sm:text-[17px]"
-                style={{
-                  fontFamily: "var(--font-instrument-serif), serif",
-                  color: "oklch(0.95 0.01 85)",
-                }}
+                className="serif text-[13px] leading-tight sm:text-[17px]"
               >
                 {cover.title}
               </div>

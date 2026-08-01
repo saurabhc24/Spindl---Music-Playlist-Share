@@ -39,7 +39,7 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
   const message = suspendState ?? deleteState;
 
   return (
-    <li className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <li className="panel p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -50,26 +50,26 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
               /{profile.usernameNormalized}
             </Link>
             {suspended && (
-              <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-400">
+              <span className="pill !py-0.5 !text-[10px] !text-[var(--danger)]">
                 Suspended
               </span>
             )}
             {!profile.isPublic && !suspended && (
-              <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+              <span className="pill !py-0.5 !text-[10px]">
                 Private
               </span>
             )}
           </div>
-          <p className="mt-1 truncate text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 truncate text-sm text-ink-dim">
             {profile.displayName ?? "(no display name)"} &middot; {profile.email ?? "no email"}
           </p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-xs text-ink-faint">
             {profile.playlistCount} playlists &middot; {profile.connectionCount}{" "}
             connections &middot; joined{" "}
             {new Date(profile.createdAt).toLocaleDateString()}
           </p>
           {profile.suspendedReason && (
-            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+            <p className="mt-1 text-xs text-[var(--danger)]">
               Reason: {profile.suspendedReason}
             </p>
           )}
@@ -83,7 +83,7 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
                 name="reason"
                 placeholder="Reason (optional)"
                 maxLength={280}
-                className="w-40 rounded-lg border border-zinc-300 bg-transparent px-3 py-1.5 text-xs outline-none dark:border-zinc-700"
+                className="field !w-40 !px-3 !py-1.5 !text-xs"
               />
             )}
             <button
@@ -91,8 +91,8 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
               disabled={suspendPending}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                 suspended
-                  ? "border border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-                  : "bg-red-600 text-white hover:bg-red-700"
+                  ? "border border-[var(--line)]   "
+                  : "btn-danger"
               }`}
             >
               {suspendPending ? "..." : suspended ? "Restore" : "Suspend"}
@@ -102,7 +102,7 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
           <button
             type="button"
             onClick={() => setConfirmingDelete((open) => !open)}
-            className="rounded-lg px-2 py-1.5 text-xs text-zinc-500 transition-colors hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400"
+            className="rounded-lg px-2 py-1.5 text-xs text-ink-faint transition-colors hover:text-[var(--danger)]"
           >
             Delete
           </button>
@@ -112,10 +112,10 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
       {confirmingDelete && (
         <form
           action={deleteAction}
-          className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30"
+          className="note note-error mt-3 !p-3"
         >
           <input type="hidden" name="profileId" value={profile.id} />
-          <p className="text-xs text-red-700 dark:text-red-300">
+          <p className="text-xs text-[var(--danger)]">
             Permanently deletes the account, its playlists and connections. Type{" "}
             <span className="font-mono font-medium">
               {profile.usernameNormalized}
@@ -126,12 +126,12 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
             <input
               name="confirmUsername"
               autoComplete="off"
-              className="flex-1 rounded-lg border border-red-300 bg-transparent px-3 py-1.5 text-xs outline-none dark:border-red-900"
+              className="field flex-1 !px-3 !py-1.5 !text-xs"
             />
             <button
               type="submit"
               disabled={deletePending}
-              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              className="btn-danger"
             >
               {deletePending ? "Deleting..." : "Delete forever"}
             </button>
@@ -144,8 +144,8 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
           role="status"
           className={`mt-2 text-xs ${
             message.error
-              ? "text-red-600 dark:text-red-400"
-              : "text-green-600 dark:text-green-400"
+              ? "text-[var(--danger)]"
+              : "text-[var(--ok)]"
           }`}
         >
           {message.error ?? message.success}

@@ -68,8 +68,8 @@ export default async function ConnectionsPage(
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Connections</h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="serif text-3xl">Connections</h1>
+        <p className="mt-2 text-sm text-ink-dim">
           Link a music service to import your playlists. We only ever read them.
         </p>
       </header>
@@ -77,14 +77,14 @@ export default async function ConnectionsPage(
       {errorMessage && (
         <p
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+          className="note note-error"
         >
           {errorMessage}
         </p>
       )}
 
       {connectedSlug && !errorMessage && (
-        <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300">
+        <p className="note note-ok">
           Connected. Head to{" "}
           <span className="font-medium">Playlists</span> to choose which ones
           appear on your page.
@@ -101,18 +101,18 @@ export default async function ConnectionsPage(
           return (
             <li
               key={provider}
-              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
+              className="panel flex flex-wrap items-center justify-between gap-4 p-5"
             >
               <div className="flex items-start gap-4">
                 <ProviderIcon provider={provider} className="mt-0.5 h-6 w-6" />
                 <div>
                   <p className="font-medium">{providerLabel(provider)}</p>
-                  <p className="mt-1 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-1 max-w-md text-sm text-ink-dim">
                     {PROVIDER_BLURBS[provider]}
                   </p>
 
                   {connection && (
-                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-2 text-xs text-ink-faint">
                       {count} playlist{count === 1 ? "" : "s"} imported
                       {connection.lastSyncedAt && (
                         <> &middot; last synced {formatRelative(connection.lastSyncedAt)}</>
@@ -121,13 +121,13 @@ export default async function ConnectionsPage(
                   )}
 
                   {connection?.lastSyncStatus?.startsWith("error") && (
-                    <p className="mt-2 max-w-md text-xs text-amber-600 dark:text-amber-400">
+                    <p className="mt-2 max-w-md text-xs text-[var(--warn)]">
                       {syncFailureHint(connection.lastSyncStatus)}
                     </p>
                   )}
 
                   {!configured && !connection && (
-                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                    <p className="mt-2 text-xs text-[var(--warn)]">
                       Not configured yet &mdash; add this service&apos;s API
                       credentials to your environment.
                     </p>

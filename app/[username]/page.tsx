@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { showcaseFonts } from "@/app/fonts";
 import { absoluteUrl, displayUrl } from "@/lib/app-url";
 import { getPublicProfile, getRenamedProfileTarget } from "@/lib/profile";
 import { normalizeUsername } from "@/lib/username";
@@ -117,7 +116,7 @@ export default async function PublicProfilePage(
 
   if (shelves.length > 0) {
     return (
-      <div className={`${showcaseFonts} flex-1`}>
+      <div className="flex-1">
         <Showcase
           displayName={displayName}
           handle={`@${profile.username}`}
@@ -136,7 +135,7 @@ export default async function PublicProfilePage(
   // build, and an empty rack reads as broken rather than as "nothing here yet".
   return (
     <div
-      className={`${showcaseFonts} flex w-full flex-1 justify-center`}
+      className="flex w-full flex-1 justify-center"
       style={{ background: "#060504" }}
     >
       <div

@@ -12,8 +12,8 @@ function Feedback({ state }: { state: ActionState }) {
       aria-live="polite"
       className={`text-sm ${
         state.error
-          ? "text-red-600 dark:text-red-400"
-          : "text-green-600 dark:text-green-400"
+          ? "text-[var(--danger)]"
+          : "text-[var(--ok)]"
       }`}
     >
       {state.error ?? state.success}
@@ -22,7 +22,7 @@ function Feedback({ state }: { state: ActionState }) {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-zinc-300 bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-300";
+  "field";
 
 export function ProfileForm({
   displayName,
@@ -69,7 +69,7 @@ export function ProfileForm({
           placeholder="What are people listening to here?"
           className={`${inputClass} resize-y`}
         />
-        <p className="mt-1 text-right text-xs text-zinc-400">
+        <p className="mt-1 text-right text-xs text-ink-faint">
           {bioValue.length}/280
         </p>
       </div>
@@ -79,11 +79,11 @@ export function ProfileForm({
           type="checkbox"
           name="isPublic"
           defaultChecked={isPublic}
-          className="mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
+          className="mt-0.5 h-4 w-4 rounded border-[var(--line)]"
         />
         <span className="text-sm">
           <span className="font-medium">Public page</span>
-          <span className="block text-zinc-600 dark:text-zinc-400">
+          <span className="block text-ink-dim">
             When off, your page returns &ldquo;not found&rdquo; to visitors.
           </span>
         </span>
@@ -94,7 +94,7 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:hover:bg-zinc-200"
+        className="btn-gold"
       >
         {pending ? "Saving..." : "Save changes"}
       </button>
@@ -119,8 +119,8 @@ export function UsernameSection({
       <label htmlFor="username" className="mb-1.5 block text-sm font-medium">
         Username
       </label>
-      <div className="flex items-center rounded-lg border border-zinc-300 focus-within:border-zinc-900 dark:border-zinc-700 dark:focus-within:border-zinc-300">
-        <span className="select-none py-2.5 pl-4 text-sm text-zinc-400">
+      <div className="flex items-center rounded-lg border border-[var(--line)] bg-[oklch(0.14_0.01_66_/_0.7)] focus-within:border-[var(--accent)]">
+        <span className="select-none py-2.5 pl-4 text-sm text-ink-faint">
           {appUrl}/
         </span>
         <input
@@ -134,7 +134,7 @@ export function UsernameSection({
         />
       </div>
 
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs text-ink-faint">
         Your old link keeps working &mdash; it redirects here automatically.
       </p>
 
@@ -143,7 +143,7 @@ export function UsernameSection({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+        className="btn-ghost"
       >
         {pending ? "Updating..." : "Change username"}
       </button>

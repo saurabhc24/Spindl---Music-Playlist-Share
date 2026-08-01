@@ -21,15 +21,15 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-zinc-200 dark:border-zinc-800">
+      <header className="border-b border-[var(--line)]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          <Link href="/dashboard" className="font-semibold tracking-tight">
+          <Link href="/dashboard" className="serif text-lg">
             Spindl
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href={`/${profile.username}`}
-              className="text-sm text-zinc-500 transition-colors hover:text-foreground dark:text-zinc-400"
+              className="text-sm text-ink-faint transition-colors hover:text-ink"
             >
               View my page
             </Link>
@@ -41,7 +41,7 @@ export default async function DashboardLayout({
             >
               <button
                 type="submit"
-                className="text-sm text-zinc-500 transition-colors hover:text-foreground dark:text-zinc-400"
+                className="text-sm text-ink-faint transition-colors hover:text-ink"
               >
                 Sign out
               </button>
@@ -58,7 +58,7 @@ export default async function DashboardLayout({
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="-mb-px inline-block whitespace-nowrap border-b-2 border-transparent py-3 text-sm text-zinc-600 transition-colors hover:border-zinc-300 hover:text-foreground dark:text-zinc-400 dark:hover:border-zinc-700"
+                  className="-mb-px inline-block whitespace-nowrap border-b-2 border-transparent py-3 text-sm text-ink-dim transition-colors hover:border-[var(--accent)] hover:text-ink"
                 >
                   {item.label}
                 </Link>

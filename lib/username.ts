@@ -130,13 +130,3 @@ export function validateUsername(input: unknown): UsernameValidation {
 
   return { ok: true, username: raw.normalize("NFKC"), normalized };
 }
-
-export function isReservedUsername(input: string): boolean {
-  const normalized = normalizeUsername(input);
-  const stripped = normalized.replace(/[._]/g, "");
-  return (
-    RESERVED_USERNAMES.has(normalized) ||
-    RESERVED_USERNAMES.has(stripped) ||
-    BLOCKED_SUBSTRINGS.some((term) => stripped.includes(term))
-  );
-}

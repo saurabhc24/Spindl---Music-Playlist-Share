@@ -29,9 +29,3 @@ export const requireProfile = cache(async () => {
   if (!profile) redirect("/onboarding/username");
   return { user, profile };
 });
-
-export const getProfile = cache(async () => {
-  const session = await auth();
-  if (!session?.user?.id) return null;
-  return prisma.profile.findUnique({ where: { userId: session.user.id } });
-});

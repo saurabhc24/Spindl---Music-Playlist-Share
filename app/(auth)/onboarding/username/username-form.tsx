@@ -78,8 +78,8 @@ export function UsernameForm({ appUrl }: { appUrl: string }) {
       <label htmlFor="username" className="sr-only">
         Username
       </label>
-      <div className="flex items-center rounded-lg border border-zinc-300 focus-within:border-zinc-900 dark:border-zinc-700 dark:focus-within:border-zinc-300">
-        <span className="select-none py-3 pl-4 text-sm text-zinc-400">
+      <div className="flex items-center rounded-lg border border-[var(--line)] bg-[oklch(0.14_0.01_66_/_0.7)] focus-within:border-[var(--accent)]">
+        <span className="select-none py-3 pl-4 text-sm text-ink-faint">
           {appUrl}/
         </span>
         <input
@@ -95,7 +95,7 @@ export function UsernameForm({ appUrl }: { appUrl: string }) {
           onChange={(event) => setValue(event.target.value)}
           aria-describedby="username-hint"
           aria-invalid={isTaken || validation?.ok === false || undefined}
-          className="w-full bg-transparent py-3 pr-4 text-sm outline-none placeholder:text-zinc-400"
+          className="w-full bg-transparent py-3 pr-4 text-sm outline-none placeholder:text-ink-faint"
         />
       </div>
 
@@ -111,7 +111,7 @@ export function UsernameForm({ appUrl }: { appUrl: string }) {
       <button
         type="submit"
         disabled={pending || isTaken}
-        className="w-full rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:hover:bg-zinc-200"
+        className="btn-gold w-full !py-3"
       >
         {pending ? "Claiming..." : "Claim my link"}
       </button>
@@ -128,7 +128,7 @@ function describe({
   validation: ReturnType<typeof validateUsername> | null;
   current: RemoteResult | null;
 }): { text: string; className: string } {
-  const muted = "text-zinc-500 dark:text-zinc-400";
+  const muted = "text-ink-faint";
 
   if (!trimmed || !validation) {
     return {
@@ -140,7 +140,7 @@ function describe({
   if (!validation.ok) {
     return {
       text: validation.message,
-      className: "text-amber-600 dark:text-amber-400",
+      className: "text-[var(--warn)]",
     };
   }
 
@@ -152,12 +152,12 @@ function describe({
     case "available":
       return {
         text: "That one's free.",
-        className: "text-green-600 dark:text-green-400",
+        className: "text-[var(--ok)]",
       };
     case "taken":
       return {
         text: current.message ?? "That username is taken.",
-        className: "text-red-600 dark:text-red-400",
+        className: "text-[var(--danger)]",
       };
     default:
       return {

@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+
+import { showcaseFonts } from "@/app/fonts";
+
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -19,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | Spindl",
   },
   description:
-    "Everything you've got spinning, on one shelf. Share your Spotify and YouTube playlists from a single link.",
+    "Everything you've got spinning, on one shelf. Share your Spotify, YouTube and Amazon Music playlists from a single link.",
 };
 
 export default function RootLayout({
@@ -28,11 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    // The showcase pair is applied here rather than per route now that every
+    // screen uses it. Geist is gone -- nothing referenced it once the dashboard
+    // moved into the same scene as the public page.
+    <html lang="en" className={`${showcaseFonts} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
         {children}
         <Analytics />
       </body>

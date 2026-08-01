@@ -17,7 +17,7 @@
 import type { MusicProvider } from "@/app/generated/prisma/enums";
 
 /** Heights the providers actually render at; the frame must match or it clips. */
-export const EMBED_HEIGHT = { SPOTIFY: 352, YOUTUBE: 200 } as const;
+const EMBED_HEIGHT = { SPOTIFY: 352, YOUTUBE: 200 } as const;
 
 export type PlaylistEmbed = {
   src: string;
@@ -59,8 +59,4 @@ export function playlistEmbed(
   // AMAZON publishes no embed; OTHER is an arbitrary service we know nothing
   // about. Both keep linking out, which is the only thing that can work.
   return null;
-}
-
-export function isPlayable(provider: MusicProvider, externalId: string) {
-  return playlistEmbed(provider, externalId) !== null;
 }

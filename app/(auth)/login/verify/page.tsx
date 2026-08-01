@@ -4,7 +4,7 @@ export default function VerifyRequestPage() {
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--panel)] ">
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
@@ -20,15 +20,15 @@ export default function VerifyRequestPage() {
             />
           </svg>
         </div>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">
+        <h1 className="serif mt-6 text-3xl">
           Check your email
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-ink-dim">
           We sent you a sign-in link. It expires in 24 hours.
         </p>
         <Link
           href="/login"
-          className="mt-8 inline-block text-sm text-zinc-500 transition-colors hover:text-foreground dark:text-zinc-400"
+          className="mt-8 inline-block text-sm text-ink-faint transition-colors hover:text-ink"
         >
           &larr; Back to sign in
         </Link>

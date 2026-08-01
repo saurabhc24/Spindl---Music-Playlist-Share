@@ -13,9 +13,6 @@ const PROVIDER_NAMES: Record<string, string> = {
   OTHER: "that link",
 };
 
-const inputClass =
-  "w-full rounded-lg border border-zinc-300 bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-300";
-
 export function AddLinkForm() {
   const [state, action, pending] = useActionState<AddLinkState, FormData>(
     addPlaylistLink,
@@ -48,12 +45,12 @@ export function AddLinkForm() {
         await action(formData);
         if (parsed) reset();
       }}
-      className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+      className="panel p-4"
     >
       <label htmlFor="url" className="block text-sm font-medium">
         Add a playlist by link
       </label>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mt-1 text-xs text-ink-faint">
         Paste a public Spotify, YouTube or Amazon Music playlist URL — or any
         other playlist link. No account connection needed.
       </p>
@@ -68,20 +65,20 @@ export function AddLinkForm() {
           autoComplete="off"
           spellCheck={false}
           aria-invalid={looksInvalid || undefined}
-          className={inputClass}
+          className="field"
         />
         <button
           type="submit"
           disabled={pending || !canSubmit}
-          className="shrink-0 rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:hover:bg-zinc-200"
+          className="shrink-0 btn-gold"
         >
           {pending ? "Adding..." : "Add"}
         </button>
       </div>
 
       {needsTitle && (
-        <div className="mt-3 space-y-2 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <div className="mt-3 space-y-2 rounded-lg border border-[var(--line)] bg-[oklch(0.14_0.01_66_/_0.5)] p-3">
+          <p className="text-xs text-ink-dim">
             {PROVIDER_NAMES[parsed!.provider] ?? "That service"} doesn&apos;t
             publish playlist details, so name it yourself.
           </p>
@@ -92,7 +89,7 @@ export function AddLinkForm() {
             placeholder="Playlist name"
             maxLength={200}
             autoComplete="off"
-            className={inputClass}
+            className="field"
           />
           <input
             name="coverImageUrl"
@@ -101,7 +98,7 @@ export function AddLinkForm() {
             placeholder="Cover image URL (optional, https://...)"
             autoComplete="off"
             spellCheck={false}
-            className={inputClass}
+            className="field"
           />
         </div>
       )}
@@ -111,10 +108,10 @@ export function AddLinkForm() {
         aria-live="polite"
         className={`mt-2 min-h-4 text-xs ${
           state?.error || looksInvalid
-            ? "text-red-600 dark:text-red-400"
+            ? "text-[var(--danger)]"
             : state?.success
-              ? "text-green-600 dark:text-green-400"
-              : "text-zinc-500 dark:text-zinc-400"
+              ? "text-[var(--ok)]"
+              : "text-ink-faint"
         }`}
       >
         {state?.error ??

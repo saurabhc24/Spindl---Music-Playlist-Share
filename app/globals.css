@@ -1,34 +1,218 @@
 @import "tailwindcss";
 
+/* --- design tokens ----------------------------------------------------------
+   One warm dark room for the whole app. The public showcase committed to this
+   palette, and every other screen now shares it rather than each page carrying
+   its own copy of the same gradients and shadows.
+
+   Deliberately not light/dark-aware: the scene *is* the design, and a light
+   variant of a lit shelf display would be a different product. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  --scene: #060504;
+  --scene-gradient: radial-gradient(
+    120% 80% at 50% -6%,
+    oklch(0.24 0.02 70) 0%,
+    oklch(0.16 0.015 65) 32%,
+    oklch(0.09 0.01 60) 66%,
+    #060504 100%
+  );
+
+  --ink: oklch(0.94 0.01 85);
+  --ink-dim: oklch(0.74 0.02 82);
+  --ink-faint: oklch(0.6 0.02 80);
+  --accent: oklch(0.86 0.08 82);
+  --gold: linear-gradient(180deg, oklch(0.92 0.07 86), oklch(0.82 0.09 80));
+  --gold-shadow: 0 10px 26px oklch(0.75 0.09 78 / 0.35);
+
+  --panel: oklch(0.2 0.015 68 / 0.62);
+  --panel-solid: oklch(0.18 0.015 66);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --danger: oklch(0.7 0.16 25);
+  --warn: oklch(0.82 0.11 75);
+  --ok: oklch(0.78 0.14 155);
+
+  /* Kept so any `bg-background` / `text-foreground` still lands in the scene. */
+  --background: var(--scene);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-manrope);
+  --font-serif: var(--font-instrument-serif);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  /* The room itself, applied once here rather than by every page. Fixed so a
+     long dashboard scrolls through the gradient instead of tiling it. */
+  background: var(--scene) var(--scene-gradient) fixed;
+  color: var(--ink);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* --- public profile showcase ------------------------------------------------
-   Keyframes for the shelf scene. Global because the covers that use them are
-   rendered inside a client component with inline styles, and @keyframes cannot
-   be expressed inline. */
+::selection {
+  background: oklch(0.86 0.08 82 / 0.3);
+}
+
+/* --- components -------------------------------------------------------------
+   Written as classes rather than repeated inline, because before this the same
+   gradient string appeared in five files and drifted in three of them. */
+@layer components {
+  .scene {
+    background: var(--scene-gradient);
+    color: var(--ink);
+  }
+
+  .serif {
+    font-family: var(--font-instrument-serif), serif;
+    font-weight: 400;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+    border-radius: 100px;
+    padding: 0.7rem 1.35rem;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    color: #151210;
+    background: var(--gold);
+    box-shadow: var(--gold-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .btn-gold:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .btn-gold:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    padding: 0.7rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: var(--ink);
+    background: var(--panel);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--line-strong);
+  }
+  .btn-ghost:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-danger {
+    border-radius: 100px;
+    padding: 0.45rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #1a0d0d;
+    background: linear-gradient(180deg, oklch(0.75 0.16 25), oklch(0.62 0.18 25));
+    border: none;
+    cursor: pointer;
+  }
+  .btn-danger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .field {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: oklch(0.14 0.01 66 / 0.7);
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .field::placeholder {
+    color: oklch(0.5 0.015 78);
+  }
+  .field:focus {
+    border-color: var(--accent);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 100px;
+    border: 1px solid var(--line);
+    background: oklch(0.24 0.015 68 / 0.7);
+    padding: 0.28rem 0.65rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ink-dim);
+  }
+
+  .note {
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    background: oklch(0.2 0.015 68 / 0.5);
+    color: var(--ink-dim);
+  }
+  .note-error {
+    border-color: oklch(0.5 0.12 25 / 0.5);
+    background: oklch(0.28 0.08 25 / 0.28);
+    color: oklch(0.86 0.09 30);
+  }
+  .note-ok {
+    border-color: oklch(0.5 0.1 155 / 0.5);
+    background: oklch(0.26 0.06 155 / 0.28);
+    color: oklch(0.86 0.11 158);
+  }
+  .note-warn {
+    border-color: oklch(0.55 0.1 75 / 0.5);
+    background: oklch(0.3 0.07 75 / 0.28);
+    color: var(--warn);
+  }
+}
+
+/* --- showcase scene animations ---------------------------------------------- */
 @keyframes shelfFloat {
   0%,
   100% {

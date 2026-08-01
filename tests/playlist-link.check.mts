@@ -154,7 +154,7 @@ for (const [label, input] of [
 // --- in-page players ---------------------------------------------------------
 
 console.log("\nEmbeddable players");
-const { playlistEmbed, isPlayable } = await import("../lib/playlist-embed");
+const { playlistEmbed } = await import("../lib/playlist-embed");
 
 const spotifyEmbed = playlistEmbed("SPOTIFY", SPOTIFY_ID);
 check(
@@ -197,10 +197,10 @@ check(
 );
 
 check(
-  "isPlayable agrees with playlistEmbed",
-  isPlayable("SPOTIFY", SPOTIFY_ID) &&
-    isPlayable("YOUTUBE", YT_ID) &&
-    !isPlayable("AMAZON", AMZ)
+  "exactly the two providers with an official player are playable",
+  playlistEmbed("SPOTIFY", SPOTIFY_ID) !== null &&
+    playlistEmbed("YOUTUBE", YT_ID) !== null &&
+    playlistEmbed("AMAZON", AMZ) === null
 );
 
 console.log(

@@ -129,7 +129,7 @@ export function PlaylistManager({ initial }: { initial: PlaylistRow[] }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-ink-dim">
           {visibleCount} of {playlists.length} shown on your page
         </p>
       </div>
@@ -137,7 +137,7 @@ export function PlaylistManager({ initial }: { initial: PlaylistRow[] }) {
       {error && (
         <p
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+          className="note note-error"
         >
           {error}
         </p>
@@ -181,7 +181,7 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-center gap-3 rounded-xl border border-zinc-200 bg-background p-3 dark:border-zinc-800 ${
+      className={`flex items-center gap-3 panel p-3 ${
         isDragging ? "z-10 shadow-lg" : ""
       }`}
     >
@@ -190,7 +190,7 @@ function SortableRow({
         {...attributes}
         {...listeners}
         aria-label={`Reorder ${playlist.title}`}
-        className="cursor-grab touch-none rounded p-1 text-zinc-400 transition-colors hover:text-zinc-600 active:cursor-grabbing dark:hover:text-zinc-300"
+        className="cursor-grab touch-none rounded p-1 text-ink-faint transition-colors hover:text-ink active:cursor-grabbing"
       >
         <svg
           aria-hidden="true"
@@ -217,12 +217,12 @@ function SortableRow({
           className="h-12 w-12 shrink-0 rounded-lg object-cover"
         />
       ) : (
-        <div className="h-12 w-12 shrink-0 rounded-lg bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800" />
+        <div className="h-12 w-12 shrink-0 rounded-lg bg-gradient-to-br from-[oklch(0.3_0.02_70)] to-[oklch(0.2_0.015_65)] " />
       )}
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{playlist.title}</p>
-        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-faint">
           <ProviderIcon provider={playlist.provider} className="h-3 w-3" />
           {providerLabel(playlist.provider)}
           {playlist.trackCount !== null && (
@@ -232,12 +232,12 @@ function SortableRow({
             </>
           )}
           {playlist.isManual && (
-            <span className="ml-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="ml-1 pill !py-0.5 !text-[10px]">
               Added by link
             </span>
           )}
           {playlist.isStale && (
-            <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+            <span className="ml-1 pill !py-0.5 !text-[10px] !text-[var(--warn)]">
               No longer available
             </span>
           )}
@@ -254,7 +254,7 @@ function SortableRow({
             type="submit"
             aria-label={`Remove ${playlist.title}`}
             title="Remove"
-            className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:text-red-600 dark:hover:text-red-400"
+            className="shrink-0 rounded p-1.5 text-ink-faint transition-colors hover:text-[var(--danger)]"
           >
             <svg
               aria-hidden="true"
@@ -282,7 +282,7 @@ function SortableRow({
           onChange={(event) => onToggle(playlist.id, event.target.checked)}
           className="peer sr-only"
         />
-        <span className="relative h-6 w-11 rounded-full bg-zinc-200 transition-colors peer-checked:bg-green-600 peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-400 peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-5 dark:bg-zinc-700" />
+        <span className="relative h-6 w-11 rounded-full bg-[var(--panel)] transition-colors peer-checked:bg-[var(--ok)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--accent)] peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-5 " />
       </label>
     </li>
   );

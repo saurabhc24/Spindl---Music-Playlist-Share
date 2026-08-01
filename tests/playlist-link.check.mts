@@ -92,24 +92,13 @@ check(
     !isYouTubeMusic(`https://www.youtube.com/playlist?list=${YT_ID}`)
 );
 
-console.log("\nAmazon Music (no API, no oEmbed -- title must come from the user)");
-const AMZ = "B07QK2LH4H";
+// Amazon had a branch of its own until it earned nothing: no API, no oEmbed and
+// no player, so a link cost the user a hand-typed title and produced a card with
+// no artwork that could not be played. It is now simply another unknown service.
+console.log("\nServices with no integration fall through to OTHER");
 for (const [label, input] of [
-  ["playlist URL", `https://music.amazon.com/playlists/${AMZ}`],
-  ["a user playlist", `https://music.amazon.com/user-playlists/${AMZ}`],
-  ["a regional domain", `https://music.amazon.co.uk/playlists/${AMZ}`],
-  ["with tracking params", `https://music.amazon.in/playlists/${AMZ}?ref=dm_sh_abc`],
-] as const) {
-  const parsed = parsePlaylistLink(input);
-  check(
-    label,
-    parsed?.provider === "AMAZON" && parsed.externalId === AMZ && parsed.needsManualTitle,
-    JSON.stringify(parsed)
-  );
-}
-
-console.log("\nAnything else becomes OTHER");
-for (const [label, input] of [
+  ["Amazon Music", "https://music.amazon.com/playlists/B07QK2LH4H"],
+  ["Amazon Music, regional domain", "https://music.amazon.co.uk/playlists/B07QK2LH4H"],
   ["Apple Music", "https://music.apple.com/us/playlist/chill-mix/pl.abc123"],
   ["Tidal", "https://tidal.com/browse/playlist/abc-123"],
   ["SoundCloud", "https://soundcloud.com/someone/sets/late-night"],
@@ -121,6 +110,11 @@ for (const [label, input] of [
     JSON.stringify(parsed)
   );
 }
+
+check(
+  "nothing is attributed to Amazon any more",
+  parsePlaylistLink("https://music.amazon.com/playlists/B07QK2LH4H")?.provider !== "AMAZON"
+);
 
 check(
   "a known provider is never downgraded to OTHER",
@@ -150,7 +144,6 @@ for (const [label, input] of [
   ["a non-playlist Spotify link", `https://open.spotify.com/track/${SPOTIFY_ID}`],
   ["an album link", `https://open.spotify.com/album/${SPOTIFY_ID}`],
   ["a bare YouTube video", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
-  ["an Amazon Music home link", "https://music.amazon.com/home"],
   ["javascript: scheme", "javascript:alert(1)"],
   ["data: URL", "data:text/html,<script>alert(1)</script>"],
   ["file: scheme", "file:///etc/passwd"],
@@ -173,7 +166,6 @@ console.log("\nImpersonation");
 for (const [label, input] of [
   ["a lookalike domain", `https://open.spotify.com.evil.test/playlist/${SPOTIFY_ID}`],
   ["a host with the real one in its path", `https://evil.test/open.spotify.com/playlist/${SPOTIFY_ID}`],
-  ["an Amazon lookalike", `https://music.amazon.evil.test/playlists/${AMZ}`],
 ] as const) {
   const parsed = parsePlaylistLink(input);
   check(
@@ -219,7 +211,6 @@ check(
   spotifyEmbed?.aspectRatio === null && spotifyEmbed?.height === 352
 );
 
-check("Amazon has no player", playlistEmbed("AMAZON", AMZ) === null);
 check(
   "OTHER has no player",
   playlistEmbed("OTHER", "https://tidal.com/browse/playlist/abc") === null
@@ -244,7 +235,7 @@ check(
   "exactly the two providers with an official player are playable",
   playlistEmbed("SPOTIFY", SPOTIFY_ID) !== null &&
     playlistEmbed("YOUTUBE", YT_ID) !== null &&
-    playlistEmbed("AMAZON", AMZ) === null
+    playlistEmbed("OTHER", "https://music.amazon.com/playlists/B07QK2LH4H") === null
 );
 
 console.log(

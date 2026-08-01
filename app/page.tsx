@@ -23,7 +23,7 @@ import { displayUrl } from "@/lib/app-url";
 const DEMO_COVERS = [
   { mark: "M", title: "Midnight drive", service: "Spotify", dot: "#1ed760", hue: 275 },
   { mark: "K", title: "Kitchen dancing", service: "YouTube", dot: "#ff3d3d", hue: 40 },
-  { mark: "D", title: "Deep focus", service: "Amazon Music", dot: "#25d1da", hue: 230 },
+  { mark: "D", title: "Deep focus", service: "Spotify", dot: "#1ed760", hue: 230 },
 ];
 
 export default function Home() {
@@ -73,8 +73,8 @@ export default function Home() {
         <p
           className="mt-5 max-w-lg text-[15px] leading-relaxed text-ink-dim sm:text-base"
         >
-          Put your favourite Spotify, YouTube and Amazon Music playlists on a
-          shelf worth showing off — and share the whole thing with one link.
+          Put your favourite Spotify and YouTube playlists on a shelf worth
+          showing off — and share the whole thing with one link.
         </p>
 
         <div className="mt-9 flex flex-col items-center gap-4">

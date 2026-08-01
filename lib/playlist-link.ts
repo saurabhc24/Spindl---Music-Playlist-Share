@@ -18,16 +18,15 @@ export type ParsedPlaylistLink = {
   externalId: string;
   /**
    * For Spotify and YouTube, a canonical URL we rebuild from a validated id --
-   * never the string the user pasted. For AMAZON and OTHER there is no id to
-   * rebuild from, so it is the pasted URL with its fragment and credentials
-   * stripped, kept only because it is what the link must point at.
+   * never the string the user pasted. For OTHER there is no id to rebuild
+   * from, so it is the pasted URL with its fragment and credentials stripped,
+   * kept only because it is what the link must point at.
    */
   externalUrl: string;
   /**
    * True when no public endpoint will tell us the title, so the user has to.
-   * Amazon Music publishes neither an API nor oEmbed, and its playlist pages
-   * redirect non-browser clients to a stub with no metadata; OTHER is by
-   * definition a service we know nothing about.
+   * Only Spotify and YouTube publish one; OTHER is by definition a service we
+   * know nothing about.
    */
   needsManualTitle: boolean;
 };
@@ -38,8 +37,6 @@ export type ParsedPlaylistLink = {
  */
 const SPOTIFY_ID = /^[A-Za-z0-9]{16,40}$/;
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{12,64}$/;
-/** Amazon uses ASINs for its own playlists and longer opaque ids for users'. */
-const AMAZON_ID = /^[A-Za-z0-9._-]{8,64}$/;
 
 /**
  * Extracts the provider and playlist id from a pasted link.
@@ -106,23 +103,6 @@ export function parsePlaylistLink(input: unknown): ParsedPlaylistLink | null {
       return youtubeLink(list, host === "music.youtube.com");
     }
     return null;
-  }
-
-  // Amazon Music runs on a per-country domain (music.amazon.co.uk, .de, .in).
-  if (/^music\.amazon\.[a-z.]{2,7}$/.test(host)) {
-    const segments = url.pathname.split("/").filter(Boolean);
-    // /playlists/{asin} for Amazon's own, /user-playlists/{id} for a user's.
-    const index = segments.findIndex(
-      (segment) => segment === "playlists" || segment === "user-playlists"
-    );
-    const id = index === -1 ? null : segments[index + 1];
-    if (!id || !AMAZON_ID.test(id)) return null;
-    return {
-      provider: "AMAZON",
-      externalId: id,
-      externalUrl: cleanUrl(url),
-      needsManualTitle: true,
-    };
   }
 
   // Anything else that is a plausible https link to a playlist somewhere. There

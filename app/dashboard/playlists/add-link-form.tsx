@@ -9,7 +9,6 @@ import { addPlaylistLink, type AddLinkState } from "./actions";
 const PROVIDER_NAMES: Record<string, string> = {
   SPOTIFY: "Spotify",
   YOUTUBE: "YouTube",
-  AMAZON: "Amazon Music",
   OTHER: "that link",
 };
 
@@ -28,8 +27,8 @@ export function AddLinkForm() {
   const parsed = trimmed ? parsePlaylistLink(trimmed) : null;
   const looksInvalid = trimmed.length > 8 && !parsed;
 
-  // Spotify and YouTube tell us the title; Amazon and everything else cannot,
-  // so the fields only appear when they are actually needed.
+  // Spotify and YouTube tell us the title; no other service does, so these
+  // fields only appear when they are actually needed.
   const needsTitle = parsed?.needsManualTitle ?? false;
   const canSubmit = Boolean(parsed) && (!needsTitle || title.trim().length > 0);
 
@@ -51,8 +50,8 @@ export function AddLinkForm() {
         Add a playlist by link
       </label>
       <p className="mt-1 text-xs text-ink-faint">
-        Paste a public Spotify, YouTube or Amazon Music playlist URL — or any
-        other playlist link. No account connection needed.
+        Paste a public Spotify or YouTube playlist URL — or any other playlist
+        link. No account connection needed.
       </p>
 
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -61,7 +60,7 @@ export function AddLinkForm() {
           name="url"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="https://music.amazon.com/playlists/..."
+          placeholder="https://open.spotify.com/playlist/..."
           autoComplete="off"
           spellCheck={false}
           aria-invalid={looksInvalid || undefined}

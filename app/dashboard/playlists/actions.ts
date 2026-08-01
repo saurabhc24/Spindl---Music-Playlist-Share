@@ -76,9 +76,9 @@ export async function addPlaylistLink(
 
   let resolved: { title: string; coverImageUrl: string | null };
   if (link.needsManualTitle) {
-    // Amazon Music and everything under OTHER publish nothing we can read, so
-    // the user is the only source for a title. Refusing the link entirely would
-    // be worse: the card only needs a name and a URL, and they have both.
+    // Services under OTHER publish nothing we can read, so the user is the only
+    // source for a title. Refusing the link entirely would be worse: the card
+    // only needs a name and a URL, and they have both.
     if (!typedTitle) {
       return { error: "Add a title for this playlist — we can't read it from that service." };
     }

@@ -10,8 +10,8 @@ import type { ProviderClient } from "./types";
  * Only the providers that can actually be connected and imported from.
  *
  * Deliberately NOT `Record<MusicProvider, ProviderClient>`. The enum also holds
- * AMAZON and OTHER, which exist purely so a playlist can be listed by link --
- * they have no API, so no client can be written for them. Typing this as a
+ * OTHER, which exists purely so a playlist can be listed by link -- it has no
+ * API, so no client can be written for it. Typing this as a
  * complete record would force a fake entry for each; typing it as Partial would
  * push a null check into every OAuth call site. Deriving the key type from the
  * object instead means the compiler rejects an unconnectable provider reaching

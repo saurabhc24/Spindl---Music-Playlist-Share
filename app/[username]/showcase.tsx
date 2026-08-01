@@ -38,7 +38,7 @@ export type ShowcaseProps = {
 const PROVIDER_DOT: Record<MusicProvider, string> = {
   SPOTIFY: "#1ed760",
   YOUTUBE: "#ff3d3d",
-  AMAZON: "#25d1da",
+  AMAZON: "oklch(0.86 0.08 82)",
   OTHER: "oklch(0.86 0.08 82)",
 };
 

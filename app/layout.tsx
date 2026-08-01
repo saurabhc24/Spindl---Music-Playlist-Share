@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | Spindl",
   },
   description:
-    "Everything you've got spinning, on one shelf. Share your Spotify, YouTube and Amazon Music playlists from a single link.",
+    "Everything you've got spinning, on one shelf. Share your Spotify and YouTube playlists from a single link.",
 };
 
 export default function RootLayout({

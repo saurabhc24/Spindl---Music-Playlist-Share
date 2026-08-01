@@ -7,8 +7,8 @@
  * Spotify's Web Playback SDK needs the *visitor* to hold Premium and to have
  * authorized this app, which a development-mode app can grant to five people.
  *
- * Amazon Music has no embed at all (both candidate paths 404), and OTHER is by
- * definition unknown, so those return null and keep their link-out behaviour.
+ * Every other service is OTHER -- unknown by definition -- so it returns null
+ * and keeps its link-out behaviour.
  *
  * Kept free of server-only imports so the same mapping runs in the browser and
  * in the checks.
@@ -69,7 +69,7 @@ export function playlistEmbed(
     };
   }
 
-  // AMAZON publishes no embed; OTHER is an arbitrary service we know nothing
-  // about. Both keep linking out, which is the only thing that can work.
+  // OTHER is an arbitrary service we know nothing about, so it keeps linking
+  // out, which is the only thing that can work.
   return null;
 }

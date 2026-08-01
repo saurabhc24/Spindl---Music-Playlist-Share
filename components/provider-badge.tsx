@@ -3,7 +3,10 @@ import type { MusicProvider } from "@/app/generated/prisma/enums";
 const PROVIDER_LABELS: Record<MusicProvider, string> = {
   SPOTIFY: "Spotify",
   YOUTUBE: "YouTube",
-  AMAZON: "Amazon Music",
+  // Nothing produces AMAZON any more -- the value survives only because a
+  // Postgres enum value cannot be dropped without recreating the type. It
+  // reads as an ordinary link, like anything else with no integration.
+  AMAZON: "Playlist",
   // Anything added by link that isn't one of the named services. Labelled by
   // what it is to the reader rather than by the enum's name.
   OTHER: "Playlist",
@@ -46,23 +49,8 @@ export function ProviderIcon({
     );
   }
 
-  if (provider === "AMAZON") {
-    // The smile, which reads as Amazon at badge size where a wordmark would not.
-    return (
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className={className}
-      >
-        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 1.6a8.4 8.4 0 1 1 0 16.8 8.4 8.4 0 0 1 0-16.8z" />
-        <path d="M7.02 14.53c2.9 1.74 6.62 1.7 9.48-.1a.36.36 0 0 1 .5.5c-1.2 1.36-3.1 2.09-4.85 2.09a7.1 7.1 0 0 1-5.3-2.15c-.14-.15.02-.4.17-.34z" />
-        <path d="M17.3 13.9c-.2-.25-1.3-.12-1.8-.06-.14.02-.17-.11-.04-.2.88-.62 2.32-.44 2.49-.23.17.2-.05 1.65-.87 2.34-.13.1-.25.05-.19-.09.2-.46.63-1.5.41-1.76z" />
-      </svg>
-    );
-  }
-
-  // OTHER: a generic music note, since we have no idea what service this is.
+  // Anything else -- OTHER, and the retired AMAZON -- gets a generic music note,
+  // since we have no idea what service is behind the link.
   return (
     <svg
       aria-hidden="true"

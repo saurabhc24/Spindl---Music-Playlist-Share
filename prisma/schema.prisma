@@ -114,12 +114,15 @@ model UsernameHistory {
   @@index([userId])
 }
 
-/// SPOTIFY and YOUTUBE can be connected over OAuth and imported from. AMAZON and
-/// OTHER cannot: Amazon Music publishes no third-party API and no oEmbed, and
-/// OTHER is whatever service a user pastes next. They exist so a playlist can
-/// still be listed by link with a title the user supplies. See
-/// ConnectableProvider in lib/providers -- the type system, not a convention,
-/// is what stops these two reaching the OAuth code paths.
+/// SPOTIFY and YOUTUBE can be connected over OAuth and imported from. OTHER
+/// cannot -- it is whatever service a user pastes next -- and exists so a
+/// playlist can still be listed by link with a title the user supplies. See
+/// ConnectableProvider in lib/providers: the type system, not a convention, is
+/// what stops it reaching the OAuth code paths.
+///
+/// AMAZON is retained but unreachable. Nothing produces it, and a Postgres enum
+/// value cannot be dropped without recreating the type and rewriting every row
+/// that references it -- which, for a value no row uses, is not worth doing.
 enum MusicProvider {
   SPOTIFY
   YOUTUBE

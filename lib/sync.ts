@@ -13,9 +13,9 @@ import {
 
 /**
  * A ConnectedAccount only ever exists for a provider we can connect to, but the
- * column is typed as the full MusicProvider enum (which now also contains the
- * link-only AMAZON and OTHER). This narrows it once, here, rather than at each
- * PROVIDERS lookup.
+ * column is typed as the full MusicProvider enum (which also contains the
+ * link-only OTHER). This narrows it once, here, rather than at each PROVIDERS
+ * lookup.
  */
 type Connection = ConnectedAccount & { provider: ConnectableProvider };
 

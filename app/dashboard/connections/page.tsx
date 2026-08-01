@@ -10,9 +10,9 @@ import { syncFailureHint } from "@/lib/sync-status";
 
 import { ConnectionActions } from "./connection-actions";
 
-// Only the providers that can actually be connected. Amazon Music and OTHER are
-// link-only -- they belong on the Playlists page, not here, because there is
-// nothing to authorize.
+// Only the providers that can actually be connected. Everything else is
+// link-only and belongs on the Playlists page, since there is nothing to
+// authorize.
 const PROVIDER_ORDER: ConnectableProvider[] = ["SPOTIFY", "YOUTUBE"];
 
 const PROVIDER_BLURBS: Record<ConnectableProvider, string> = {

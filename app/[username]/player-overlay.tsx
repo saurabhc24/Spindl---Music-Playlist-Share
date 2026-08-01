@@ -1,22 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { playlistEmbed } from "@/lib/playlist-embed";
 
+import { mountEmbedPlayer } from "./embed-player";
 import type { ShowcaseItem } from "./showcase";
 
 /**
  * The slide-up detail view: a turntable, and the provider's own player beneath it.
  *
- * The design's transport controls and per-track list are not built, because the
- * data behind them does not exist for Spotify -- /v1/playlists/{id}/tracks answers
- * 403 under an app token and the playlist response nulls its `tracks` field, so
- * titles, artists and durations are precisely what cannot be obtained. Driving a
- * bar with a timer instead, as the mock does, would show progress unrelated to
- * what anyone is hearing. The embed carries the real controls and the real track
- * list, and is the only thing here that makes sound.
+ * The design's per-track list is not built, because the data behind it does not
+ * exist for Spotify -- /v1/playlists/{id}/tracks answers 403 under an app token
+ * and the playlist response nulls its `tracks` field. The embed carries the real
+ * track list and the real controls, and is the only thing here that makes sound.
  */
+
+/**
+ * Deck geometry, in one place because every circle below is derived from it.
+ *
+ * The container is exactly the deck's size: it used to be shorter, so the deck
+ * overflowed by ~30px and sat on top of the playlist title. Sizes are modest --
+ * an earlier, larger deck left the embed with almost no room on a phone, which
+ * is the part people came for.
+ */
+const DECK = 208;
+const VINYL = Math.round(DECK * 0.9);
+const LABEL = Math.round(DECK * 0.37);
+
 export function PlayerOverlay({
   item,
   gradient,
@@ -28,24 +39,38 @@ export function PlayerOverlay({
   dotColor: string;
   onClose: () => void;
 }) {
-  // Which playlist the iframe has been cleared to load. Held as an id rather
-  // than a boolean so closing needs no state reset at all -- `mounted` simply
-  // stops being true once there is no item.
-  const [readyFor, setReadyFor] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const hostRef = useRef<HTMLDivElement | null>(null);
   const embed = item ? playlistEmbed(item.provider, item.externalId) : null;
-  const mounted = item !== null && readyFor === item.id;
+  const open = Boolean(item);
 
-  // The iframe is created only once the overlay is genuinely open. Mounting it
-  // with the page would hand every visitor's IP and cookies to Spotify or Google
-  // before they asked for anything, and load a third-party player per playlist
-  // on a page most people only scroll.
+  const handlePlayingChange = useCallback((next: boolean) => {
+    setPlaying(next);
+  }, []);
+
+  // The player is built only once the overlay is genuinely open. Mounting it
+  // with the page would hand every visitor's address and cookies to Spotify or
+  // Google before they asked for anything.
   useEffect(() => {
-    if (!item) return;
-    // One frame later, so the slide-up transition starts before the iframe
-    // begins fetching and competing for the main thread.
-    const id = requestAnimationFrame(() => setReadyFor(item.id));
-    return () => cancelAnimationFrame(id);
-  }, [item]);
+    const host = hostRef.current;
+    if (!item || !embed || !host) return;
+
+    const teardown = mountEmbedPlayer({
+      provider: item.provider,
+      externalId: item.externalId,
+      container: host,
+      height: embed.height,
+      onPlayingChange: handlePlayingChange,
+      fallbackSrc: embed.src,
+    });
+
+    return () => {
+      teardown();
+      // The provider replaced the host with its own iframe; clear it so the
+      // next playlist starts from an empty container rather than two players.
+      host.replaceChildren();
+    };
+  }, [item, embed, handlePlayingChange]);
 
   useEffect(() => {
     if (!item) return;
@@ -55,8 +80,6 @@ export function PlayerOverlay({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [item, onClose]);
-
-  const open = Boolean(item);
 
   return (
     <div
@@ -79,37 +102,16 @@ export function PlayerOverlay({
           "transform 0.55s cubic-bezier(0.22, 0.72, 0.16, 1), opacity 0.4s",
       }}
     >
-      {/* top bar */}
       <div
         style={{
-          position: "relative",
-          zIndex: 3,
           flex: "0 0 auto",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "18px 18px 8px",
+          padding: "16px 16px 4px",
         }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "9px 15px 9px 12px",
-            border: "1px solid rgba(255,255,255,0.1)",
-            cursor: "pointer",
-            borderRadius: 100,
-            background: "oklch(0.2 0.015 68 / 0.7)",
-            backdropFilter: "blur(8px)",
-            fontFamily: "var(--font-manrope), sans-serif",
-            fontWeight: 700,
-            fontSize: 12.5,
-            color: "oklch(0.9 0.03 85)",
-          }}
-        >
+        <button type="button" onClick={onClose} className="btn-ghost !py-2 !px-4">
           <span style={{ fontSize: 15, lineHeight: 1 }}>&lsaquo;</span> Back
         </button>
         <div
@@ -119,7 +121,7 @@ export function PlayerOverlay({
             gap: 7,
             fontSize: 11.5,
             fontWeight: 600,
-            color: "oklch(0.72 0.03 82)",
+            color: "var(--ink-dim)",
           }}
         >
           <span
@@ -138,79 +140,55 @@ export function PlayerOverlay({
       {/* TURNTABLE */}
       <div
         style={{
-          position: "relative",
           flex: "0 0 auto",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "4px 0 0",
+          padding: "2px 0 0",
         }}
       >
-        <div style={{ perspective: 1100, perspectiveOrigin: "50% 34%" }}>
+        <div style={{ perspective: 900, perspectiveOrigin: "50% 40%" }}>
+          {/* Exactly deck-sized, so nothing spills onto the title below. */}
           <div
             style={{
               position: "relative",
-              width: 300,
-              height: 232,
+              width: DECK,
+              height: DECK,
               transform: "rotateX(20deg)",
               transformStyle: "preserve-3d",
             }}
           >
-            {/* deck */}
             <div
               aria-hidden="true"
               style={{
                 position: "absolute",
-                left: "50%",
-                top: "52%",
-                width: 288,
-                height: 288,
-                marginLeft: -144,
-                marginTop: -144,
+                inset: 0,
                 borderRadius: "50%",
                 background:
                   "radial-gradient(circle at 42% 34%, oklch(0.34 0.008 250), oklch(0.19 0.006 250) 70%)",
                 boxShadow:
-                  "0 30px 60px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.08), inset 0 -8px 20px rgba(0,0,0,0.5)",
-              }}
-            />
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "52%",
-                width: 276,
-                height: 276,
-                marginLeft: -138,
-                marginTop: -138,
-                borderRadius: "50%",
-                background:
-                  "conic-gradient(from 0deg, oklch(0.3 0.006 250), oklch(0.24 0.006 250), oklch(0.3 0.006 250), oklch(0.23 0.006 250), oklch(0.3 0.006 250))",
-                opacity: 0.6,
+                  "0 24px 48px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.08), inset 0 -8px 20px rgba(0,0,0,0.5)",
               }}
             />
 
-            {/* vinyl. CSS rotation rather than GSAP: an infinite linear spin is
-                one keyframe, and a 70 KB animation library on a public page is
-                not worth it. */}
+            {/* Spins only while the provider reports playback. */}
             <div
               aria-hidden="true"
               style={{
                 position: "absolute",
                 left: "50%",
-                top: "52%",
-                width: 262,
-                height: 262,
-                marginLeft: -131,
-                marginTop: -131,
+                top: "50%",
+                width: VINYL,
+                height: VINYL,
+                marginLeft: -VINYL / 2,
+                marginTop: -VINYL / 2,
                 borderRadius: "50%",
                 background:
                   "repeating-radial-gradient(circle at 50% 50%, #0c0c0e 0 1.6px, #17171b 1.6px 3.2px)",
                 boxShadow:
                   "0 8px 22px rgba(0,0,0,0.55), inset 0 0 40px rgba(0,0,0,0.6)",
                 animation: "shelfSpin 2.4s linear infinite",
-                animationPlayState: mounted ? "running" : "paused",
+                animationPlayState: playing ? "running" : "paused",
               }}
             >
               <div
@@ -222,17 +200,15 @@ export function PlayerOverlay({
                     "conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.14) 24deg, transparent 60deg, transparent 200deg, rgba(255,255,255,0.08) 224deg, transparent 260deg)",
                 }}
               />
-              {/* centre label: the real cover if there is one, else the design's
-                  gradient-and-initial treatment */}
               <div
                 style={{
                   position: "absolute",
                   left: "50%",
                   top: "50%",
-                  width: 110,
-                  height: 110,
-                  marginLeft: -55,
-                  marginTop: -55,
+                  width: LABEL,
+                  height: LABEL,
+                  marginLeft: -LABEL / 2,
+                  marginTop: -LABEL / 2,
                   borderRadius: "50%",
                   overflow: "hidden",
                   background: gradient,
@@ -245,39 +221,25 @@ export function PlayerOverlay({
                   <img
                     src={item.coverImageUrl}
                     alt=""
-                    width={110}
-                    height={110}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
+                    width={LABEL}
+                    height={LABEL}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
-                  <>
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "radial-gradient(80% 60% at 30% 24%, rgba(255,255,255,0.4), transparent 58%)",
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontFamily: "var(--font-instrument-serif), serif",
-                        fontSize: 42,
-                        color: "rgba(255,255,255,0.92)",
-                      }}
-                    >
-                      {item?.title.charAt(0).toUpperCase()}
-                    </div>
-                  </>
+                  <div
+                    className="serif"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: LABEL * 0.45,
+                      color: "rgba(255,255,255,0.92)",
+                    }}
+                  >
+                    {item?.title.charAt(0).toUpperCase()}
+                  </div>
                 )}
               </div>
               <div
@@ -285,10 +247,10 @@ export function PlayerOverlay({
                   position: "absolute",
                   left: "50%",
                   top: "50%",
-                  width: 9,
-                  height: 9,
-                  marginLeft: -4.5,
-                  marginTop: -4.5,
+                  width: 8,
+                  height: 8,
+                  marginLeft: -4,
+                  marginTop: -4,
                   borderRadius: "50%",
                   background: "#050505",
                   boxShadow: "0 0 0 2px rgba(255,255,255,0.15)",
@@ -296,104 +258,96 @@ export function PlayerOverlay({
               />
             </div>
 
-            {/* tonearm, swinging onto the record once it is spinning */}
+            {/* Tonearm rests off the record until something is playing. */}
             <div
               aria-hidden="true"
-              style={{ position: "absolute", right: 14, top: 6, width: 44, height: 44 }}
+              style={{
+                position: "absolute",
+                right: 2,
+                top: 2,
+                width: 34,
+                height: 34,
+                transformOrigin: "82% 18%",
+                transform: `rotate(${playing ? 24 : 2}deg)`,
+                transition: "transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
             >
               <div
                 style={{
                   position: "absolute",
-                  right: 6,
-                  top: 6,
-                  transformOrigin: "88% 14%",
-                  transform: `rotate(${mounted ? 26 : 2}deg)`,
-                  transition: "transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)",
+                  right: 0,
+                  top: 0,
+                  width: 24,
+                  height: 24,
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle at 38% 32%, oklch(0.5 0.008 250), oklch(0.26 0.006 250))",
+                  boxShadow:
+                    "0 3px 8px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: 9,
+                  top: 18,
+                  width: 5,
+                  height: DECK * 0.5,
+                  borderRadius: 4,
+                  transform: "rotate(26deg)",
+                  transformOrigin: "top center",
+                  background:
+                    "linear-gradient(to bottom, oklch(0.62 0.006 250), oklch(0.42 0.006 250))",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
                 }}
               >
                 <div
                   style={{
                     position: "absolute",
-                    right: -2,
-                    top: -8,
-                    width: 30,
-                    height: 30,
-                    borderRadius: "50%",
+                    left: -4,
+                    bottom: -7,
+                    width: 12,
+                    height: 17,
+                    borderRadius: 3,
                     background:
-                      "radial-gradient(circle at 38% 32%, oklch(0.5 0.008 250), oklch(0.26 0.006 250))",
-                    boxShadow:
-                      "0 3px 8px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2)",
+                      "linear-gradient(to bottom, oklch(0.5 0.006 250), oklch(0.3 0.006 250))",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.5)",
                   }}
                 />
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 8,
-                    top: 14,
-                    width: 6,
-                    height: 150,
-                    borderRadius: 4,
-                    transform: "rotate(24deg)",
-                    transformOrigin: "top center",
-                    background:
-                      "linear-gradient(to bottom, oklch(0.62 0.006 250), oklch(0.42 0.006 250))",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: -4,
-                      bottom: -8,
-                      width: 14,
-                      height: 20,
-                      borderRadius: 3,
-                      background:
-                        "linear-gradient(to bottom, oklch(0.5 0.006 250), oklch(0.3 0.006 250))",
-                      boxShadow: "0 2px 5px rgba(0,0,0,0.5)",
-                    }}
-                  />
-                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 2, padding: "0 20px" }}>
+        <div style={{ textAlign: "center", marginTop: 10, padding: "0 20px" }}>
           {item?.trackCount !== null && item?.trackCount !== undefined && (
             <div
               style={{
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 600,
                 letterSpacing: "1px",
-                color: "oklch(0.66 0.04 82)",
+                color: "var(--accent)",
+                opacity: 0.75,
                 marginBottom: 2,
               }}
             >
               {item.trackCount} TRACKS
             </div>
           )}
-          <div
-            style={{
-              fontFamily: "var(--font-instrument-serif), serif",
-              fontSize: 30,
-              lineHeight: 1.05,
-              color: "oklch(0.96 0.01 85)",
-            }}
-          >
+          <div className="serif" style={{ fontSize: 26, lineHeight: 1.05 }}>
             {item?.title}
           </div>
         </div>
       </div>
 
-      {/* THE PLAYER ITSELF */}
+      {/* THE PLAYER */}
       <div
         style={{
           flex: "1 1 auto",
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          padding: "14px 14px 18px",
+          padding: "12px 12px 14px",
           minHeight: 0,
         }}
       >
@@ -407,38 +361,26 @@ export function PlayerOverlay({
                 background: "oklch(0.16 0.01 66)",
               }}
             >
-              {mounted && item && (
-                <iframe
-                  key={item.id}
-                  src={embed.src}
-                  title={`${item.title} player`}
-                  width="100%"
-                  height={embed.height}
-                  style={{ display: "block", border: 0 }}
-                  loading="lazy"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                />
-              )}
+              {/* The provider's API replaces this with its own iframe. */}
+              <div ref={hostRef} style={{ minHeight: embed.height }} />
             </div>
             <p
               style={{
-                margin: "10px 4px 0",
+                margin: "8px 4px 0",
                 fontSize: 11,
                 textAlign: "center",
-                color: "oklch(0.56 0.02 80)",
+                color: "var(--ink-faint)",
               }}
             >
               {embed.note}
             </p>
           </>
         ) : (
-          // Amazon Music and pasted links have no player anywhere, so the only
-          // honest thing left is the way out to the service that does.
           <div style={{ textAlign: "center", paddingBottom: 8 }}>
             <p
               style={{
                 fontSize: 12.5,
-                color: "oklch(0.62 0.02 80)",
+                color: "var(--ink-faint)",
                 marginBottom: 14,
               }}
             >
@@ -449,19 +391,7 @@ export function PlayerOverlay({
                 href={item.externalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "12px 22px",
-                  borderRadius: 100,
-                  fontWeight: 700,
-                  fontSize: 13,
-                  color: "#151210",
-                  background:
-                    "linear-gradient(180deg, oklch(0.92 0.07 86), oklch(0.82 0.09 80))",
-                  boxShadow: "0 10px 26px oklch(0.75 0.09 78 / 0.35)",
-                }}
+                className="btn-gold"
               >
                 Open in {item.providerLabel}
               </a>

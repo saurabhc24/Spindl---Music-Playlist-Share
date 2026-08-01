@@ -705,23 +705,45 @@ export function Showcase({
                             </div>
                           </button>
 
+                          {/* The reflection carries the artwork as an <img>
+                              rather than a CSS url(). The url() form needed the
+                              address escaped, and CSS.escape is a browser API --
+                              this is a client component, but client components
+                              still render on the server, where there is no CSS
+                              global. It threw only for playlists that actually
+                              had cover art, so a profile with none looked fine. */}
                           <div
                             aria-hidden="true"
                             style={{
+                              position: "relative",
                               width: 150,
                               height: 52,
                               marginTop: 2,
                               borderRadius: "0 0 15px 15px",
-                              background: item.coverImageUrl
-                                ? `url(${CSS.escape(item.coverImageUrl)}) center/cover`
-                                : gradient,
+                              overflow: "hidden",
+                              background: gradient,
                               opacity: 0.38,
                               WebkitMaskImage:
                                 "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent 86%)",
                               maskImage:
                                 "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent 86%)",
                             }}
-                          />
+                          >
+                            {item.coverImageUrl && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.coverImageUrl}
+                                alt=""
+                                width={150}
+                                height={150}
+                                style={{
+                                  width: "100%",
+                                  height: 150,
+                                  objectFit: "cover",
+                                }}
+                              />
+                            )}
+                          </div>
 
                           <div
                             style={{

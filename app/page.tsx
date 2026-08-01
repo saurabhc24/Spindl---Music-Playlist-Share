@@ -30,7 +30,12 @@ export default function Home() {
   return (
     <div
       data-shelf-scene
-      className="scene relative flex flex-1 flex-col overflow-hidden"
+      // overflow-x only. Plain `overflow-hidden` clipped everything past the
+      // fold on a phone -- and because the clip also kills vertical scrolling,
+      // the call to action became unreachable rather than merely off-screen.
+      // The x-axis still needs containing so the ambient glow can't widen the
+      // page.
+      className="scene relative flex flex-1 flex-col overflow-x-hidden"
     >
       <div
         aria-hidden="true"

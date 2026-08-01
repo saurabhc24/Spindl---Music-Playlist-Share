@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import { absoluteUrl, displayUrl } from "@/lib/app-url";
 import { getPublicProfile, getRenamedProfileTarget } from "@/lib/profile";
+import { surfaceLabel } from "@/lib/playlist-link";
 import { normalizeUsername } from "@/lib/username";
 import { providerLabel } from "@/components/provider-badge";
 
@@ -104,7 +105,12 @@ export default async function PublicProfilePage(
           id: playlist.id,
           title: playlist.title,
           provider: playlist.provider,
-          providerLabel: providerLabel(playlist.provider),
+          // "YouTube Music" where that is the playlist's real home.
+          providerLabel: surfaceLabel(
+            playlist.provider,
+            playlist.externalUrl,
+            providerLabel(playlist.provider)
+          ),
           coverImageUrl: playlist.coverImageUrl,
           trackCount: playlist.trackCount,
           externalUrl: playlist.externalUrl,

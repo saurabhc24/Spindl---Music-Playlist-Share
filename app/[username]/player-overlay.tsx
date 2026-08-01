@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { playlistEmbed } from "@/lib/playlist-embed";
+import { isYouTubeMusic } from "@/lib/playlist-link";
 
 import { mountEmbedPlayer } from "./embed-player";
 import type { ShowcaseItem } from "./showcase";
@@ -374,6 +375,31 @@ export function PlayerOverlay({
             >
               {embed.note}
             </p>
+            {/* YouTube Music has no embed of its own, so the player above is
+                regular YouTube -- which omits Music's art tracks and can show
+                far fewer songs than the playlist holds. Saying so, and offering
+                the surface that has them all, beats silently under-representing
+                someone's playlist. */}
+            {item && isYouTubeMusic(item.externalUrl) && (
+              <p
+                style={{
+                  margin: "6px 4px 0",
+                  fontSize: 11,
+                  textAlign: "center",
+                  color: "var(--ink-faint)",
+                }}
+              >
+                Some YouTube Music tracks only play there.{" "}
+                <a
+                  href={item.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--accent)", fontWeight: 600 }}
+                >
+                  Open in YouTube Music
+                </a>
+              </p>
+            )}
           </>
         ) : (
           <div style={{ textAlign: "center", paddingBottom: 8 }}>

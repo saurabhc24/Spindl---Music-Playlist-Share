@@ -96,7 +96,15 @@ export function parsePlaylistLink(input: unknown): ParsedPlaylistLink | null {
     // Covers /playlist?list=, and a /watch?v=...&list= link copied while
     // playing a video from the playlist.
     const list = url.searchParams.get("list");
-    if (list && YOUTUBE_ID.test(list)) return youtubeLink(list);
+    // A playlist made in YouTube Music keeps music.youtube.com as its home.
+    // Rewriting it to www.youtube.com used to look like harmless
+    // canonicalisation, but the regular YouTube playlist view omits Music's
+    // "art tracks" -- the auto-generated "<artist> - Topic" uploads that most
+    // YouTube Music songs actually are -- so a six-song playlist arrived
+    // showing one. The id is identical either way; only the surface differs.
+    if (list && YOUTUBE_ID.test(list)) {
+      return youtubeLink(list, host === "music.youtube.com");
+    }
     return null;
   }
 
@@ -153,13 +161,36 @@ function spotifyLink(externalId: string): ParsedPlaylistLink {
   };
 }
 
-function youtubeLink(externalId: string): ParsedPlaylistLink {
+function youtubeLink(externalId: string, music = false): ParsedPlaylistLink {
   return {
     provider: "YOUTUBE",
     externalId,
-    externalUrl: `https://www.youtube.com/playlist?list=${externalId}`,
+    externalUrl: music
+      ? `https://music.youtube.com/playlist?list=${externalId}`
+      : `https://www.youtube.com/playlist?list=${externalId}`,
     needsManualTitle: false,
   };
+}
+
+/**
+ * YouTube Music is the same provider and the same playlist id, but a different
+ * surface -- and the one a listener should be sent to when that is where the
+ * playlist lives. Derived from the stored URL rather than a column, since the
+ * URL already records it.
+ */
+export function isYouTubeMusic(externalUrl: string): boolean {
+  return externalUrl.startsWith("https://music.youtube.com/");
+}
+
+/** The name to show a visitor: "YouTube Music" where that is the real home. */
+export function surfaceLabel(
+  provider: MusicProvider,
+  externalUrl: string,
+  fallback: string
+): string {
+  return provider === "YOUTUBE" && isYouTubeMusic(externalUrl)
+    ? "YouTube Music"
+    : fallback;
 }
 
 export type ResolvedPlaylist = {
@@ -201,7 +232,11 @@ export async function resolvePlaylistLink(
   const endpoint =
     link.provider === "SPOTIFY"
       ? `https://open.spotify.com/oembed?url=${encodeURIComponent(link.externalUrl)}`
-      : `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(link.externalUrl)}`;
+      : `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(
+          // Always ask www: music.youtube.com returns its app shell for every
+          // path, /oembed included, so it answers 200 with HTML and no data.
+          `https://www.youtube.com/playlist?list=${link.externalId}`
+        )}`;
 
   let response: Response;
   try {

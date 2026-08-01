@@ -4,7 +4,9 @@ import "dotenv/config";
 // is about what we accept, what we reject, and what URL we rebuild.
 //   npx tsx --conditions=react-server tests/playlist-link.check.mts
 
-const { parsePlaylistLink } = await import("../lib/playlist-link");
+const { parsePlaylistLink, isYouTubeMusic, surfaceLabel } = await import(
+  "../lib/playlist-link"
+);
 
 let failures = 0;
 function check(name: string, condition: boolean, detail = "") {
@@ -58,6 +60,36 @@ check(
   "rebuilds a canonical YouTube URL from a watch link",
   parsePlaylistLink(`https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=${YT_ID}`)
     ?.externalUrl === `https://www.youtube.com/playlist?list=${YT_ID}`
+);
+
+// music.youtube.com used to be rewritten to www.youtube.com, which looked like
+// harmless canonicalisation but silently dropped the playlist's art tracks --
+// the "<artist> - Topic" uploads most YouTube Music songs are -- so a six-song
+// playlist arrived showing one.
+console.log("\nYouTube Music keeps its own surface");
+check(
+  "a YouTube Music link stays on music.youtube.com",
+  parsePlaylistLink(`https://music.youtube.com/playlist?list=${YT_ID}`)?.externalUrl ===
+    `https://music.youtube.com/playlist?list=${YT_ID}`
+);
+check(
+  "a regular YouTube link is never promoted to Music",
+  parsePlaylistLink(`https://www.youtube.com/playlist?list=${YT_ID}`)?.externalUrl ===
+    `https://www.youtube.com/playlist?list=${YT_ID}`
+);
+check(
+  "both surfaces resolve to the same playlist id",
+  parsePlaylistLink(`https://music.youtube.com/playlist?list=${YT_ID}`)?.externalId ===
+    parsePlaylistLink(`https://www.youtube.com/playlist?list=${YT_ID}`)?.externalId
+);
+check(
+  "the Music surface is labelled as such, and only it",
+  surfaceLabel("YOUTUBE", `https://music.youtube.com/playlist?list=${YT_ID}`, "YouTube") ===
+    "YouTube Music" &&
+    surfaceLabel("YOUTUBE", `https://www.youtube.com/playlist?list=${YT_ID}`, "YouTube") ===
+      "YouTube" &&
+    isYouTubeMusic(`https://music.youtube.com/playlist?list=${YT_ID}`) &&
+    !isYouTubeMusic(`https://www.youtube.com/playlist?list=${YT_ID}`)
 );
 
 console.log("\nAmazon Music (no API, no oEmbed -- title must come from the user)");

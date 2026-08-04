@@ -1,209 +1,190 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
 /**
  * A vinyl record, drawn rather than photographed.
  *
- * The photograph it replaces had its highlights baked in, so rotating it turned
- * the reflections with the disc -- which is exactly what a real record does not
- * do. Here the light is fixed and only the surface moves beneath it, so the
- * sheen sits still while the grooves stream through it.
+ * The photograph it replaces had its highlights baked in, so turning it turned
+ * the reflections with the disc -- the one thing a real record never does. Here
+ * the light is fixed and only the surface moves beneath it: the sheen stays put
+ * and the grooves travel through it.
  *
- * Drawn with one fragment shader rather than a 3D library. There is no scene to
- * manage -- a single disc, one fixed light, no camera motion -- and a library
- * would add a few hundred kilobytes to the first page a visitor sees for
- * geometry that is two lines of trigonometry. Procedural grooves are also sharp
- * at any size, which the 350px photograph was not once it was scaled up, and
- * they cost no download at all.
+ * Three.js drives a single quad with a custom material. There is no scene to
+ * speak of -- one disc, one light, no camera motion -- so the work is all in the
+ * shader, and three.js handles the context, the resize and the render loop.
  */
 
-const VERTEX_SHADER = `#version 300 es
-in vec2 aPosition;
-out vec2 vUv;
+const VERTEX_SHADER = /* glsl */ `
+varying vec2 vUv;
 void main() {
-  vUv = aPosition * 0.5 + 0.5;
-  gl_Position = vec4(aPosition, 0.0, 1.0);
+  vUv = uv;
+  // The quad already spans clip space, so no projection is needed.
+  gl_Position = vec4(position.xy, 0.0, 1.0);
 }`;
 
-const FRAGMENT_SHADER = `#version 300 es
+const FRAGMENT_SHADER = /* glsl */ `
 precision highp float;
 
-in vec2 vUv;
-out vec4 outColor;
-
-uniform float uTime;
+varying vec2 vUv;
+uniform float uAngle;
 
 const float DISC_R  = 0.985;
 const float LABEL_R = 0.315;
-const float HOLE_R  = 0.024;
+const float HOLE_R  = 0.023;
 
-// Groove pitch. High enough to read as a record, and the derivative-based fade
-// below stops it aliasing into moire when the disc is drawn small.
-const float PITCH = 520.0;
+// Roughly 90 turns across the radius, which is about what a 12" LP shows at this
+// size: fine enough to read as grooves, coarse enough to survive being drawn a
+// few pixels apart.
+const float PITCH = 560.0;
+
+// The wider rings a record shows between tracks. Concentric, so they stay put as
+// the disc turns -- which is correct, because on a real record they do.
+const float BANDS = 13.0;
 
 void main() {
   vec2 p = vUv * 2.0 - 1.0;
   float r = length(p);
 
-  // Every derivative in this shader is taken in uniform control flow -- there is
-  // no discard above them. fwidth() inside a branch is undefined in GLSL and
-  // produces driver-dependent speckling along exactly the edges being smoothed.
-  // The cutout is done with alpha instead, which costs a few shaded fragments
-  // outside the disc and nothing else.
+  // Every derivative here is taken in uniform control flow. fwidth() inside a
+  // branch is undefined in GLSL and speckles exactly the edges it is smoothing,
+  // so the cutout is done with alpha rather than discard.
   float edge = max(fwidth(r), 1e-5) * 1.5;
   float disc = 1.0 - smoothstep(DISC_R - edge, DISC_R, r);
 
   float ang = atan(p.y, p.x);
-  float rot = uTime;
 
   vec2 radial  = p / max(r, 1e-5);
   vec2 tangent = vec2(-radial.y, radial.x);
 
-  // A record is one continuous spiral, not a stack of rings: the pattern has to
+  // A record is one continuous spiral, not a stack of rings: the pattern must
   // depend on angle as well as radius, or rotation would be invisible because
   // concentric circles look identical from every angle.
-  float spiral = r * PITCH + (ang + rot) * 2.0;
+  float spiral = r * PITCH + (ang + uAngle) * 3.0;
 
-  // Fade the grooves out wherever a pixel spans more than about half a cycle.
-  // Without this the centre turns to moire on a high-density screen.
-  float density = fwidth(spiral);
-  float legible = 1.0 - smoothstep(1.2, 3.0, density);
+  // Fade the groove wherever a pixel spans more than about half a cycle, or the
+  // inner radius turns to moire on a dense screen.
+  float legible = 1.0 - smoothstep(1.1, 2.6, fwidth(spiral));
+  float groove  = sin(spiral) * legible;
 
-  float groove = sin(spiral) * legible;
+  // Track separations: a few wider, darker rings laid over the fine pitch.
+  float bandWave = sin(r * BANDS * 6.28318);
+  float band     = smoothstep(0.86, 1.0, abs(bandWave));
 
-  // Tilt the normal across the groove, never along it.
-  vec3 n = normalize(vec3(radial * groove * 0.22, 1.0));
+  // Normal tilted across the groove wall, never along it.
+  vec3 n = normalize(vec3(radial * groove * 0.9, 1.0));
 
-  // The light sits above and slightly to the left, in screen space, and does
-  // not rotate. This is the whole point: the disc turns underneath it.
-  vec3 L = normalize(vec3(-0.28, 0.62, 0.73));
+  // Fixed in screen space, above and a little to the left. The disc turns
+  // underneath it; the light does not move.
+  vec3 L = normalize(vec3(-0.30, 0.60, 0.74));
   vec3 V = vec3(0.0, 0.0, 1.0);
   vec3 H = normalize(L + V);
 
-  // Anisotropic highlight (Kajiya-Kay). Vinyl's sheen smears along the groove
-  // into a long band rather than gathering into a round dot, and that band is
-  // most of what makes the material legible as a record.
+  // Anisotropic highlight (Kajiya-Kay). Vinyl smears its sheen ALONG the groove
+  // into a long band rather than gathering it into a round dot, and that band is
+  // most of what identifies the material as a record.
   vec3  T = normalize(vec3(tangent, 0.0));
   float TdotH = dot(T, H);
-  float sheen = pow(max(0.0, sqrt(max(0.0, 1.0 - TdotH * TdotH))), 46.0);
+  float sheen = pow(max(0.0, sqrt(max(0.0, 1.0 - TdotH * TdotH))), 26.0);
 
-  float diffuse = max(dot(n, L), 0.0);
+  // The broad soft reflection of the source itself: the wide bright sweep across
+  // one side of a glossy record. Also fixed.
+  float sweep = pow(max(0.0, dot(normalize(vec3(p * 0.75, 1.0)), L)), 2.2);
 
-  // Base plastic: near-black, faintly cool, darkening toward the rim.
-  vec3 base = mix(vec3(0.055, 0.056, 0.062), vec3(0.021, 0.021, 0.026), r);
+  // Grooves are near-invisible in shadow and strongly contrasted under the
+  // light, exactly as on a real disc. Driving their contrast from the lighting
+  // is what makes them read as grooves; a flat modulation just looks like noise
+  // on black plastic, which is how the first attempt failed.
+  float lit = sheen * 0.75 + sweep * 0.85;
+  float grooveContrast = groove * (0.045 + 1.15 * lit);
 
-  // Broad soft reflection of the light source itself, fixed in place.
-  float bounce = pow(max(0.0, dot(normalize(vec3(p * 0.55, 1.0)), L)), 3.4);
+  float shade = max(dot(n, L), 0.0);
+
+  vec3 base = mix(vec3(0.050, 0.051, 0.058), vec3(0.017, 0.017, 0.021), r);
 
   vec3 col = base;
-  col += base * diffuse * 0.55;
-  col += vec3(1.0, 0.98, 0.94) * sheen * 0.85 * (0.35 + 0.65 * legible);
-  col += vec3(0.85, 0.87, 0.95) * bounce * 0.13;
-  col += vec3(0.6, 0.62, 0.7) * groove * 0.012;
+  col += base * shade * 0.35;
+  col += vec3(0.86, 0.88, 0.95) * sweep * 0.30;
+  col += vec3(1.00, 0.99, 0.96) * sheen * 1.15;
+  col += vec3(0.80, 0.83, 0.92) * grooveContrast;
+  col -= vec3(0.35, 0.36, 0.40) * band * (0.05 + 0.55 * lit);
 
-  // Rim: a lit edge on the light side, as a thick disc catches.
-  float rim = smoothstep(DISC_R - 0.045, DISC_R - 0.004, r);
-  col += vec3(0.9, 0.9, 0.95) * rim * pow(max(0.0, dot(radial, L.xy)), 2.0) * 0.30;
+  // A thick disc catches light along its outer edge.
+  float rim = smoothstep(DISC_R - 0.05, DISC_R - 0.004, r);
+  col += vec3(0.92, 0.93, 0.98) * rim * pow(max(0.0, dot(radial, L.xy)), 2.0) * 0.42;
 
   // ---- label ---------------------------------------------------------------
   float labelMask = 1.0 - smoothstep(LABEL_R - edge * 1.4, LABEL_R, r);
-  if (labelMask > 0.001) {
-    float lr = r / LABEL_R;
-    vec3 label = mix(vec3(0.74, 0.10, 0.11), vec3(0.55, 0.06, 0.08), lr);
+  float lr = r / LABEL_R;
+  vec3 label = mix(vec3(0.80, 0.11, 0.12), vec3(0.60, 0.06, 0.08), lr);
 
-    // Two printed rings, and one radial tick — the tick is what makes rotation
-    // read at a glance once the grooves are too fine to follow.
-    float ring = smoothstep(0.02, 0.0, abs(lr - 0.62)) + smoothstep(0.02, 0.0, abs(lr - 0.72));
-    label = mix(label, vec3(0.92, 0.84, 0.68), ring * 0.5);
+  // Printed rings, plus one radial tick so rotation still reads once the grooves
+  // are too fine to follow individually.
+  float ring = smoothstep(0.022, 0.0, abs(lr - 0.60))
+             + smoothstep(0.022, 0.0, abs(lr - 0.71));
+  label = mix(label, vec3(0.95, 0.88, 0.74), ring * 0.45);
 
-    float tickAngle = mod(ang + rot + 3.14159, 6.28318) - 3.14159;
-    float tick = smoothstep(0.05, 0.0, abs(tickAngle)) * smoothstep(0.42, 0.5, lr) * (1.0 - smoothstep(0.86, 0.94, lr));
-    label = mix(label, vec3(0.95, 0.88, 0.72), tick * 0.65);
+  float tickAngle = mod(ang + uAngle + 3.14159, 6.28318) - 3.14159;
+  float tick = smoothstep(0.045, 0.0, abs(tickAngle))
+             * smoothstep(0.40, 0.48, lr)
+             * (1.0 - smoothstep(0.84, 0.93, lr));
+  label = mix(label, vec3(0.97, 0.90, 0.76), tick * 0.6);
 
-    // Paper is matte: it keeps the soft bounce but not the anisotropic sheen.
-    label += vec3(1.0) * bounce * 0.10;
-    label += label * diffuse * 0.25;
+  // Paper is matte: it takes the broad sweep but not the anisotropic sheen.
+  label += vec3(1.0) * sweep * 0.16;
 
-    col = mix(col, label, labelMask);
-  }
+  col = mix(col, label, labelMask);
 
   // ---- spindle hole --------------------------------------------------------
   float hole = 1.0 - smoothstep(HOLE_R - edge * 1.4, HOLE_R, r);
-  col = mix(col, vec3(0.02, 0.02, 0.025), hole);
+  col = mix(col, vec3(0.015, 0.015, 0.019), hole);
 
-  outColor = vec4(col, disc);
+  gl_FragColor = vec4(col, disc);
 }`;
-
-function compile(gl: WebGL2RenderingContext, type: number, source: string) {
-  const shader = gl.createShader(type);
-  if (!shader) return null;
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    gl.deleteShader(shader);
-    return null;
-  }
-  return shader;
-}
 
 export function VinylRecord({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  // Starts false so server-rendered HTML shows only the gradient disc behind
-  // this; the canvas fades in once a context and a compiled program exist.
-  const [live, setLive] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const gl = canvas.getContext("webgl2", {
-      alpha: true,
-      antialias: true,
-      premultipliedAlpha: false,
-      powerPreference: "low-power",
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: "low-power",
+      });
+    } catch {
+      return; // No WebGL at all: the gradient disc behind stays.
+    }
+
+    renderer.setClearColor(0x000000, 0);
+    // Capped: a decorative element has no business shading four times the pixels
+    // on a 3x screen.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    const uniforms = { uAngle: { value: 0.8 } };
+    const material = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader: VERTEX_SHADER,
+      fragmentShader: FRAGMENT_SHADER,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
     });
-    if (!gl) return; // No WebGL2: the gradient disc behind stays.
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    scene.add(new THREE.Mesh(geometry, material));
 
-    const vs = compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
-    const program = vs && fs ? gl.createProgram() : null;
-    if (!vs || !fs || !program) return;
-
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
-
-    gl.useProgram(program);
-
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([-1, -1, 3, -1, -1, 3]),
-      gl.STATIC_DRAW
-    );
-    const position = gl.getAttribLocation(program, "aPosition");
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-
-    const uTime = gl.getUniformLocation(program, "uTime");
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    setLive(true);
-
-    // Square buffer, capped: this is a decorative element and there is no reason
-    // to shade four times the pixels on a 3x screen.
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const size = Math.round(canvas.clientWidth * dpr);
-      if (size > 0 && canvas.width !== size) {
-        canvas.width = size;
-        canvas.height = size;
-        gl.viewport(0, 0, size, size);
-      }
+      const size = canvas.clientWidth;
+      if (size > 0) renderer.setSize(size, size, false);
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -213,29 +194,29 @@ export function VinylRecord({ className }: { className?: string }) {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    let raf = 0;
     let last = performance.now();
-    // Not from zero: a record caught mid-turn looks placed rather than reset.
-    let angle = 0.8;
-
-    const frame = (now: number) => {
+    renderer.setAnimationLoop(() => {
+      const now = performance.now();
       const delta = Math.min((now - last) / 1000, 0.1);
       last = now;
-      if (!stillPreferred && !document.hidden) angle += delta * 0.62;
-      gl.uniform1f(uTime, angle);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      raf = requestAnimationFrame(frame);
-    };
-    raf = requestAnimationFrame(frame);
+      if (!stillPreferred && !document.hidden) {
+        uniforms.uAngle.value += delta * 0.6;
+      }
+      renderer.render(scene, camera);
+    });
+
+    // Revealed by touching the element rather than through state: this is one
+    // boolean that only ever goes true, and rendering the tree again to carry it
+    // buys nothing. Until it fires -- no WebGL, or a shader that will not
+    // compile -- the gradient disc behind shows through.
+    canvas.style.opacity = "1";
 
     return () => {
-      cancelAnimationFrame(raf);
+      renderer.setAnimationLoop(null);
       observer.disconnect();
-      gl.deleteBuffer(buffer);
-      gl.deleteProgram(program);
-      gl.deleteShader(vs);
-      gl.deleteShader(fs);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
     };
   }, []);
 
@@ -245,7 +226,7 @@ export function VinylRecord({ className }: { className?: string }) {
         ref={canvasRef}
         aria-hidden="true"
         className="block h-auto w-full"
-        style={{ aspectRatio: "1 / 1", opacity: live ? 1 : 0 }}
+        style={{ aspectRatio: "1 / 1", opacity: 0, transition: "opacity 0.4s" }}
       />
     </div>
   );

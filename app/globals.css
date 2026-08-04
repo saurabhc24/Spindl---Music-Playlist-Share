@@ -85,31 +85,17 @@ body {
     font-weight: 400;
   }
 
-  /* The landing page's display faces.
-
-     NaN Jaune is named first, so a machine with it installed renders the design
-     exactly; naming a family in CSS distributes no files. It is NOT served from
-     this repo: the available files are the TRIAL cut, licensed "personal use
-     only", which does not extend to a font served off a public deployment. Every
-     visitor therefore gets Space Grotesk -- a proportional grotesque of the same
-     build, self-hosted, and the closest face that can lawfully ship.
-
-     The names are the families the font actually registers, read out of the
-     TTFs' name tables rather than guessed. The design uses two different cuts,
-     which are two families rather than two weights, so they cannot share a rule:
-     Midi Medium sets the headline, Maxi Medium the wordmark. */
+  /* NaN Jaune, self-hosted via next/font. Midi and Maxi are separate families
+     rather than weights of one, so the headline and the wordmark cannot share a
+     rule -- the design sets them in different cuts. */
   .display {
-    font-family:
-      "NaN Jaune TRIAL Midi Medium", "NaN Jaune Midi Medium",
-      var(--font-display), system-ui, sans-serif;
+    font-family: var(--font-display), system-ui, sans-serif;
     font-weight: 500;
     letter-spacing: -0.01em;
   }
 
   .wordmark {
-    font-family:
-      "NaN Jaune TRIAL Maxi Medium", "NaN Jaune Maxi Medium",
-      var(--font-display), system-ui, sans-serif;
+    font-family: var(--font-wordmark), system-ui, sans-serif;
     font-weight: 500;
   }
 

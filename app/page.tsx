@@ -81,7 +81,8 @@ export default function Home() {
             </Link>
           </p>
 
-          <span className="display mt-3 text-[17px] tracking-wide">Spindl</span>
+          {/* The frame sets the wordmark in Maxi, not the headline's Midi. */}
+          <span className="wordmark mt-3 text-[17px] tracking-wide">Spindl</span>
         </div>
       </main>
     </div>

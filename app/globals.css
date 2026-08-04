@@ -85,6 +85,19 @@ body {
     font-weight: 400;
   }
 
+  /* The landing page's display face. NaN Jaune is named first so a machine with
+     it installed -- the designer's -- renders the design exactly; everyone else
+     falls to Space Grotesk, which is the same species of grotesque and can
+     actually be served. Naming a family here distributes no font files.
+     If the installed family name differs, it is this one line to correct. */
+  .display {
+    font-family:
+      "NaN Jaune Midi TRIAL", "NaN Jaune TRIAL", "NaN Jaune",
+      var(--font-display), system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
   .panel {
     background: var(--panel);
     border: 1px solid var(--line);

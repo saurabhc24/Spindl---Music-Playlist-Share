@@ -54,7 +54,7 @@ export default function Home() {
         {/* Clears the exposed half of the record before the copy starts. */}
         <div className="h-[34vh] min-h-[168px] shrink-0" />
 
-        <h1 className="serif max-w-[19rem] text-[34px] leading-[1.12] sm:text-[40px]">
+        <h1 className="display max-w-[19rem] text-[34px] leading-[1.12] sm:text-[40px]">
           Everything you&apos;ve got spinning
         </h1>
         <p className="mt-6 max-w-[17rem] text-[15px] leading-relaxed text-ink-dim">
@@ -81,7 +81,7 @@ export default function Home() {
             </Link>
           </p>
 
-          <span className="serif mt-3 text-[17px] tracking-wide">Spindl</span>
+          <span className="display mt-3 text-[17px] tracking-wide">Spindl</span>
         </div>
       </main>
     </div>

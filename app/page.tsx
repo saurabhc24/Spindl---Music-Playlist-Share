@@ -29,6 +29,13 @@ export default function Home() {
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-0 w-[min(124vw,560px)] -translate-x-1/2 -translate-y-1/2 select-none"
       >
+        {/* The spin goes on the image, not the wrapper: shelfSpin animates
+            `transform`, which would replace the wrapper's centring translate
+            and throw the record off to one side. Slow on purpose -- this fills
+            the top of the screen and sits directly behind the headline, where a
+            record-speed rotation competes with the copy instead of setting a
+            mood. Reduced motion is already handled: the rule in globals.css
+            stops every animation inside [data-shelf-scene]. */}
         <Image
           src="/vinyl-record.png"
           alt=""
@@ -36,6 +43,10 @@ export default function Home() {
           height={350}
           priority
           className="h-auto w-full"
+          style={{
+            animation: "shelfSpin 10s linear infinite",
+            willChange: "transform",
+          }}
         />
       </div>
 

@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { VinylRecord } from "./vinyl-record";
-
 /**
  * The landing page, from the Figma design (node 1:2).
  *
@@ -25,9 +23,9 @@ export default function Home() {
       className="scene relative flex min-h-[100dvh] flex-1 flex-col overflow-x-hidden"
     >
       {/* The record sits half off the top edge, as in the frame. The gradient
-          underneath is the fallback for a browser without WebGL2: a plausible
-          flat disc costing no bytes, rather than a photograph that would be
-          downloaded by everyone to serve the few percent who need it. */}
+          underneath shows while the animation loads, and replaces it entirely
+          under prefers-reduced-motion -- an animated GIF cannot be paused by
+          CSS, so the only way to honour that preference is not to show it. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-0 w-[min(124vw,560px)] -translate-x-1/2 -translate-y-1/2 select-none"
@@ -39,7 +37,16 @@ export default function Home() {
               "radial-gradient(circle at 50% 50%, #6d1114 0 15%, #17171b 15.5% 49%, transparent 49.5%)",
           }}
         >
-          <VinylRecord className="h-full w-full" />
+          {/* A plain img, not next/image: the optimizer flattens animated GIFs
+              to a single frame unless it is told to leave them alone. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/vinyl.gif"
+            alt=""
+            width={480}
+            height={480}
+            className="vinyl block h-full w-full"
+          />
         </div>
       </div>
 

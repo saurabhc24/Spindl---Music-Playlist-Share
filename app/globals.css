@@ -283,6 +283,12 @@ body {
 /* The scene leans on ambient motion, which is exactly the kind that provokes
    vestibular symptoms. The layout is identical without it. */
 @media (prefers-reduced-motion: reduce) {
+  /* An animated GIF ignores animation properties entirely, so the only way to
+     stop it is to remove it. The gradient disc behind takes its place. */
+  .vinyl {
+    display: none;
+  }
+
   [data-shelf-scene] *,
   [data-shelf-scene] *::before,
   [data-shelf-scene] *::after {

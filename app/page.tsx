@@ -28,7 +28,7 @@ export default function Home() {
           CSS, so the only way to honour that preference is not to show it. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-0 w-[min(124vw,560px)] -translate-x-1/2 -translate-y-1/2 select-none"
+        className="pointer-events-none absolute left-1/2 top-0 w-[min(161vw,728px)] -translate-x-1/2 -translate-y-1/2 select-none"
       >
         <div
           className="aspect-square w-full rounded-full"
@@ -51,8 +51,12 @@ export default function Home() {
       </div>
 
       <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7">
-        {/* Clears the exposed half of the record before the copy starts. */}
-        <div className="h-[34vh] min-h-[168px] shrink-0" />
+        {/* Clears the exposed half of the record before the copy starts.
+            Measured in the same unit as the record rather than in vh: the disc
+            is sized off viewport *width*, so a viewport that is wide and short
+            would grow the record past a vh-based gap and push it into the
+            headline. Half of 161vw is 80.5vw, so 84vw leaves a little air. */}
+        <div className="h-[min(84vw,380px)] shrink-0" />
 
         <h1 className="display max-w-[19rem] text-[34px] leading-[1.12] sm:text-[40px]">
           Everything you&apos;ve got spinning

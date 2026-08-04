@@ -23,30 +23,29 @@ export const manrope = Manrope({
 });
 
 /**
- * NaN Jaune, the landing page's display face, self-hosted.
+ * The display faces for the landing page.
  *
- * Midi and Maxi are separate families rather than weights of one, which is why
- * they load separately: the design sets the headline in Midi and the wordmark in
- * Maxi. Files live under app/_fonts -- the underscore keeps the folder out of
- * the router, and next/font hashes and serves them, so they are not exposed at a
- * guessable public path.
+ * Two separate families rather than two weights of one, which is why they load
+ * separately: the headline and the wordmark are set in different cuts.
  *
- * These are the TRIAL cut, licensed for personal use. Fine for this project;
- * swap in the retail woff2 files if Spindl ever needs a commercial licence.
+ * Export names and filenames are deliberately generic. next/font derives the
+ * emitted @font-face family from the export identifier and the asset path from
+ * the filename, so naming either after the typeface would publish it in the
+ * stylesheet and in a URL.
  */
-export const nanJauneMidi = localFont({
-  src: "./_fonts/NaNJaune-MidiMedium.ttf",
+export const displayFont = localFont({
+  src: "./_fonts/display-midi.ttf",
   variable: "--font-display",
   display: "swap",
   weight: "500",
 });
 
-export const nanJauneMaxi = localFont({
-  src: "./_fonts/NaNJaune-MaxiMedium.ttf",
+export const wordmarkFont = localFont({
+  src: "./_fonts/display-maxi.ttf",
   variable: "--font-wordmark",
   display: "swap",
   weight: "500",
 });
 
 /** Applied to the wrapper element of any route using the showcase look. */
-export const showcaseFonts = `${instrumentSerif.variable} ${manrope.variable} ${nanJauneMidi.variable} ${nanJauneMaxi.variable}`;
+export const showcaseFonts = `${instrumentSerif.variable} ${manrope.variable} ${displayFont.variable} ${wordmarkFont.variable}`;

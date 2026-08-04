@@ -1,5 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
+
+import { VinylRecord } from "./vinyl-record";
 
 /**
  * The landing page, from the Figma design (node 1:2).
@@ -23,31 +24,23 @@ export default function Home() {
       data-shelf-scene
       className="scene relative flex min-h-[100dvh] flex-1 flex-col overflow-x-hidden"
     >
-      {/* The record sits half off the top edge, as in the frame. Decorative:
-          the headline underneath already says what this is. */}
+      {/* The record sits half off the top edge, as in the frame. The gradient
+          underneath is the fallback for a browser without WebGL2: a plausible
+          flat disc costing no bytes, rather than a photograph that would be
+          downloaded by everyone to serve the few percent who need it. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-0 w-[min(124vw,560px)] -translate-x-1/2 -translate-y-1/2 select-none"
       >
-        {/* The spin goes on the image, not the wrapper: shelfSpin animates
-            `transform`, which would replace the wrapper's centring translate
-            and throw the record off to one side. Slow on purpose -- this fills
-            the top of the screen and sits directly behind the headline, where a
-            record-speed rotation competes with the copy instead of setting a
-            mood. Reduced motion is already handled: the rule in globals.css
-            stops every animation inside [data-shelf-scene]. */}
-        <Image
-          src="/vinyl-record.png"
-          alt=""
-          width={350}
-          height={350}
-          priority
-          className="h-auto w-full"
+        <div
+          className="aspect-square w-full rounded-full"
           style={{
-            animation: "shelfSpin 10s linear infinite",
-            willChange: "transform",
+            background:
+              "radial-gradient(circle at 50% 50%, #6d1114 0 15%, #17171b 15.5% 49%, transparent 49.5%)",
           }}
-        />
+        >
+          <VinylRecord className="h-full w-full" />
+        </div>
       </div>
 
       <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7">

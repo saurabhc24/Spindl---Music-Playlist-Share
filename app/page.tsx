@@ -27,7 +27,7 @@ export default function Home() {
       {/* The frame starts the headline about a fifth of the way down. Held as a
           fraction so it stays a fifth on any screen, with a floor for very short
           windows where a proportional gap would leave nothing for the copy. */}
-      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[min(30vw,220px,15vh)] pt-[max(64px,19vh)]">
+      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[min(45vw,238px,22vh)] pt-[max(64px,19vh)]">
         <h1 className="display max-w-[19rem] text-[clamp(26px,4.4vh,36px)] leading-[1.12] sm:text-[40px]">
           Everything you&apos;ve got spinning
         </h1>
@@ -70,16 +70,25 @@ export default function Home() {
           copy above already says what the page is. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(30vw,220px,15vh)] select-none overflow-hidden"
+        className="pointer-events-none absolute inset-x-0 bottom-0 flex select-none justify-center"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/turntable_image.png"
-          alt=""
-          width={510}
-          height={489}
-          className="absolute left-1/2 top-1/2 w-[106%] max-w-none -translate-x-1/2 -translate-y-1/2"
-        />
+        {/* The deck is capped at a phone-ish width instead of tracking the
+            viewport. Sized to the full page it reached ~2000px across on a
+            desktop, which made it ~1950px tall, and the short band then showed a
+            hugely magnified sliver of its middle. The band's height is derived
+            from that same width -- the frame's 413x174 crop is a 2.37 ratio, so
+            45vw is to 106vw as 238px is to 560px -- which keeps the slice
+            constant instead of letting the two dimensions drift apart. */}
+        <div className="relative h-[min(45vw,238px,22vh)] w-[min(106vw,560px)] overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/turntable_image.png"
+            alt=""
+            width={510}
+            height={489}
+            className="absolute left-1/2 top-1/2 w-full max-w-none -translate-x-1/2 -translate-y-1/2"
+          />
+        </div>
       </div>
     </div>
   );

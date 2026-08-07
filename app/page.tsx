@@ -1,4 +1,33 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
+
+/**
+ * Where the deck actually sits inside turntable_image.png, measured from the
+ * file rather than guessed at: it is 510x489, and the artwork occupies only
+ * y 174..317. A third of the file is empty above the deck and a third below.
+ * Cropping against the file's own edges therefore crops mostly nothing, which
+ * is why the deck used to float clear of the screen edge instead of running off
+ * it -- every offset below is built from these bounds instead.
+ */
+const ART = { width: 510, height: 489, top: 174, bottom: 317 };
+
+const DECK_TOP = ART.top / ART.height;
+const DECK_BOTTOM = ART.bottom / ART.height;
+const ASPECT = ART.height / ART.width;
+
+/** A little air above the deck, and how much of its height survives the cut. */
+const HEADROOM = 0.045;
+const SHOWN = 0.88;
+
+/**
+ * Both derived from the deck's width, so the band and the artwork inside it
+ * cannot drift apart -- as two independently tuned expressions previously could.
+ * BAND is how tall a slice the viewport keeps; LIFT is how far the artwork rides
+ * up inside it so the slice starts just above the deck rather than in the file's
+ * empty upper third.
+ */
+const BAND = (HEADROOM + SHOWN * (DECK_BOTTOM - DECK_TOP)) * ASPECT;
+const LIFT = (DECK_TOP - HEADROOM) * ASPECT;
 
 /**
  * The landing page, from the Figma design (node 44:6).
@@ -23,11 +52,21 @@ export default function Home() {
     <div
       data-shelf-scene
       className="scene relative flex h-[100dvh] flex-col overflow-hidden"
+      style={
+        {
+          // One width drives the deck and the strip of it the page keeps, so
+          // the copy's bottom padding and the band below it stay in step. The
+          // 80vh term is for short landscape windows, where a width-only
+          // measure would hand half the screen to the deck.
+          "--deck": "min(106vw, 560px, 80vh)",
+          "--band": `calc(var(--deck) * ${BAND.toFixed(4)})`,
+        } as CSSProperties
+      }
     >
       {/* The frame starts the headline about a fifth of the way down. Held as a
           fraction so it stays a fifth on any screen, with a floor for very short
           windows where a proportional gap would leave nothing for the copy. */}
-      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[min(45vw,238px,22vh)] pt-[max(64px,19vh)]">
+      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[var(--band)] pt-[max(64px,19vh)]">
         <h1 className="display max-w-[19rem] text-[clamp(26px,4.4vh,36px)] leading-[1.12] sm:text-[40px]">
           Everything you&apos;ve got spinning
         </h1>
@@ -64,31 +103,32 @@ export default function Home() {
 
       {/* Pinned to the foot rather than placed in the flow: in the flow it was
           added after main had already filled the viewport, so the page grew past
-          one screen and the band sat below the fold. The frame crops the deck to
-          a middle slice -- neither the very top nor the base -- which centring
-          the oversized image inside a short band reproduces. Decorative: the
-          copy above already says what the page is. */}
+          one screen and the band sat below the fold. The band's bottom IS the
+          bottom of the screen, so what it clips is clipped by the viewport --
+          the deck runs off the edge rather than resting above it. Decorative:
+          the copy above already says what the page is.
+
+          The deck is capped at a phone-ish width instead of tracking the
+          viewport. Sized to the full page it reached ~2000px across on a
+          desktop, which made it ~1950px tall, and the short band then showed a
+          hugely magnified sliver of its middle. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 flex select-none justify-center"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--band)] select-none overflow-hidden"
       >
-        {/* The deck is capped at a phone-ish width instead of tracking the
-            viewport. Sized to the full page it reached ~2000px across on a
-            desktop, which made it ~1950px tall, and the short band then showed a
-            hugely magnified sliver of its middle. The band's height is derived
-            from that same width -- the frame's 413x174 crop is a 2.37 ratio, so
-            45vw is to 106vw as 238px is to 560px -- which keeps the slice
-            constant instead of letting the two dimensions drift apart. */}
-        <div className="relative h-[min(45vw,238px,22vh)] w-[min(106vw,560px)] overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/turntable_image.png"
-            alt=""
-            width={510}
-            height={489}
-            className="absolute left-1/2 top-1/2 w-full max-w-none -translate-x-1/2 -translate-y-1/2"
-          />
-        </div>
+        {/* Ridden up by LIFT so the band opens just above the deck instead of in
+            the file's empty upper third, and left long below so its base leaves
+            the screen. Anchored by the top -- centring is what put the empty
+            third back under the deck and held it clear of the edge. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/turntable_image.png"
+          alt=""
+          width={ART.width}
+          height={ART.height}
+          className="absolute left-1/2 w-[var(--deck)] max-w-none -translate-x-1/2"
+          style={{ top: `calc(var(--deck) * -${LIFT.toFixed(4)})` }}
+        />
       </div>
     </div>
   );

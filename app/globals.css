@@ -271,6 +271,19 @@ body {
   }
 }
 
+/* The cover wall. Each row holds its list twice, so travelling exactly half its
+   own width lands the second copy where the first began and the loop is seamless.
+   Direction is flipped per row with animation-direction rather than a second
+   keyframe. */
+@keyframes wallScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @keyframes shelfSheen {
   0% {
     transform: translateX(-140%) skewX(-18deg);

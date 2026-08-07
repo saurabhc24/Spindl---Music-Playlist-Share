@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { CoverWall } from "./cover-wall";
+
 /**
  * The landing page, from the Figma design (node 44:6).
  *
@@ -27,7 +29,7 @@ export default function Home() {
       {/* The frame starts the headline about a fifth of the way down. Held as a
           fraction so it stays a fifth on any screen, with a floor for very short
           windows where a proportional gap would leave nothing for the copy. */}
-      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[min(45vw,238px,22vh)] pt-[max(64px,19vh)]">
+      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[calc(min(45vw,238px,22vh)+2.25rem)] pt-[max(64px,19vh)]">
         <h1 className="display max-w-[19rem] text-[clamp(26px,4.4vh,36px)] leading-[1.12] sm:text-[40px]">
           Everything you&apos;ve got spinning
         </h1>
@@ -36,9 +38,11 @@ export default function Home() {
           socials
         </p>
 
-        {/* The frame leaves a deliberate void here, pushing the actions to the
-            foot of the screen rather than stacking them under the copy. */}
-        <div className="flex-1" />
+        {/* The frame leaves a void here; the wall fills it, taking whatever
+            vertical space is left rather than asserting a height of its own. */}
+        <div className="mt-7 flex min-h-0 flex-1 flex-col justify-center">
+          <CoverWall />
+        </div>
 
         <div className="flex flex-col items-center gap-3.5 pt-8">
           <Link href="/login" className="btn-gold !px-6 !py-3">

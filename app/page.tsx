@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CoverWall } from "./cover-wall";
+import { CoverGlobe } from "./cover-globe";
 
 /**
  * The landing page, from the Figma design (node 44:6).
@@ -26,10 +26,15 @@ export default function Home() {
       data-shelf-scene
       className="scene relative flex h-[100dvh] flex-col overflow-hidden"
     >
-      {/* The frame starts the headline about a fifth of the way down. Held as a
-          fraction so it stays a fifth on any screen, with a floor for very short
-          windows where a proportional gap would leave nothing for the copy. */}
-      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[calc(min(45vw,238px,22vh)+2.25rem)] pt-[max(64px,19vh)]">
+      {/* The frame starts the headline about a sixth of the way down. Held as a
+          fraction so it holds that share on any screen, with a floor for very
+          short windows where a proportional gap would leave nothing for the copy.
+          The three vertical gaps here are all clamped rather than fixed: the
+          headline, copy, call to action and deck are the page's fixed cost, and
+          on a 667px phone the untrimmed versions spent the whole viewport
+          between them -- which left the globe, the only thing here that flexes,
+          with nothing. */}
+      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[calc(min(45vw,238px,22vh)+clamp(1rem,2.6vh,2.25rem))] pt-[max(48px,15vh)]">
         <h1 className="display max-w-[19rem] text-[clamp(26px,4.4vh,36px)] leading-[1.12] sm:text-[40px]">
           Everything you&apos;ve got spinning
         </h1>
@@ -38,13 +43,18 @@ export default function Home() {
           socials
         </p>
 
-        {/* The frame leaves a void here; the wall fills it, taking whatever
-            vertical space is left rather than asserting a height of its own. */}
-        <div className="mt-7 flex min-h-0 flex-1 flex-col justify-center">
-          <CoverWall />
+        {/* The frame leaves a void here, and the globe centres itself in it.
+            Deliberately *not* sized by this slot: a circle sized to whatever
+            height was left over is a circle that vanishes on a small phone. It
+            takes its diameter from the viewport instead and overhangs the slot
+            when the slot is the smaller of the two -- which is safe only because
+            its rim fades to nothing, so the overhang passes behind the copy and
+            the call to action rather than colliding with them. */}
+        <div className="relative mt-[clamp(16px,3vh,28px)] flex min-h-0 flex-1 items-center justify-center">
+          <CoverGlobe />
         </div>
 
-        <div className="flex flex-col items-center gap-3.5 pt-8">
+        <div className="flex flex-col items-center gap-3.5 pt-[clamp(18px,3vh,32px)]">
           <Link href="/login" className="btn-gold !px-6 !py-3">
             Claim your link
           </Link>

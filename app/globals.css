@@ -271,16 +271,16 @@ body {
   }
 }
 
-/* The cover wall. Each row holds its list twice, so travelling exactly half its
-   own width lands the second copy where the first began and the loop is seamless.
-   Direction is flipped per row with animation-direction rather than a second
-   keyframe. */
-@keyframes wallScroll {
+/* The cover globe. Every latitude band runs this at the same duration, which is
+   what makes them one turning body rather than five independent rings -- the
+   equator covers more ground per second than the poles because its ring is
+   wider, not because it is animated any faster. */
+@keyframes globeTurn {
   from {
-    transform: translateX(0);
+    transform: rotateY(0deg);
   }
   to {
-    transform: translateX(-50%);
+    transform: rotateY(360deg);
   }
 }
 

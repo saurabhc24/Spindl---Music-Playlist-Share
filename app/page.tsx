@@ -70,7 +70,7 @@ export default function Home() {
             foot of the screen rather than stacking them under the copy. */}
         <div className="flex-1" />
 
-        <div className="flex flex-col items-center gap-3.5 pb-9 pt-16">
+        <div className="flex flex-col items-center gap-3.5 pb-7 pt-16">
           <Link href="/login" className="btn-gold !px-6 !py-3">
             Claim your link
           </Link>
@@ -86,9 +86,26 @@ export default function Home() {
           </p>
 
           {/* The frame sets the wordmark in Maxi, not the headline's Midi. */}
-          <span className="wordmark mt-3 text-[17px] tracking-wide">Spindl</span>
+          <span className="wordmark mt-3 text-[17px] tracking-wide">SpindlShare</span>
         </div>
       </main>
+
+      {/* Closes the page, cropped by its own container so it bleeds off the
+          bottom edge rather than lengthening the document. Decorative: the copy
+          above already says what this is. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none relative h-[min(27vw,210px)] w-full shrink-0 select-none overflow-hidden"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/turntable_image.png"
+          alt=""
+          width={510}
+          height={489}
+          className="absolute left-1/2 top-0 w-full max-w-none -translate-x-1/2"
+        />
+      </div>
     </div>
   );
 }

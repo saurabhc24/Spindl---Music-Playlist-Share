@@ -271,19 +271,6 @@ body {
   }
 }
 
-/* The cover globe. Every latitude band runs this at the same duration, which is
-   what makes them one turning body rather than five independent rings -- the
-   equator covers more ground per second than the poles because its ring is
-   wider, not because it is animated any faster. */
-@keyframes globeTurn {
-  from {
-    transform: rotateY(0deg);
-  }
-  to {
-    transform: rotateY(360deg);
-  }
-}
-
 @keyframes shelfSheen {
   0% {
     transform: translateX(-140%) skewX(-18deg);

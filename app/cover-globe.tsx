@@ -38,11 +38,11 @@ const COVERS = Array.from(
  * freezes every band at its starting angle.
  */
 const BANDS = [
-  { lat: 58, count: 7, turn: 0 },
-  { lat: 29, count: 12, turn: 17 },
-  { lat: 0, count: 14, turn: 9 },
-  { lat: -29, count: 12, turn: 24 },
-  { lat: -58, count: 7, turn: 31 },
+  { lat: 61.6, count: 5, turn: 0 },
+  { lat: 26.1, count: 10, turn: 17 },
+  { lat: 0, count: 11, turn: 9 },
+  { lat: -26.1, count: 10, turn: 24 },
+  { lat: -61.6, count: 5, turn: 31 },
 ];
 
 /** One full rotation. Ambient, not a carousel -- nobody should watch it finish. */
@@ -54,7 +54,7 @@ const ROTATION = "72s";
  * fade out past the diagonal and leave the rim hard.
  */
 const FADE =
-  "radial-gradient(circle closest-side at 50% 50%, #000 0 38%, transparent 86%)";
+  "radial-gradient(circle closest-side at 50% 50%, #000 0 50%, transparent 100%)";
 
 /**
  * Each pass reaches further in than the last, so focus falls away instead of
@@ -63,9 +63,9 @@ const FADE =
  * which is also the half that overhangs the copy.
  */
 const HAZE = [
-  { blur: "2px", clear: "26%", full: "58%" },
-  { blur: "5px", clear: "44%", full: "76%" },
-  { blur: "10px", clear: "62%", full: "92%" },
+  { blur: "2px", clear: "46%", full: "74%" },
+  { blur: "5px", clear: "62%", full: "86%" },
+  { blur: "10px", clear: "78%", full: "98%" },
 ];
 
 const radians = (degrees: number) => (degrees * Math.PI) / 180;
@@ -86,9 +86,9 @@ export function CoverGlobe() {
           // screen a *larger* globe is the worse one -- it puts that fixed
           // distance nearer the sharp middle instead of out in the faded rim.
           // 32vh keeps the text past the falloff on a 667px phone.
-          "--globe": "min(72vw, 32vh, 300px)",
+          "--globe": "min(76vw, 35vh, 310px)",
           "--r": "calc(var(--globe) * 0.36)",
-          "--cover": "calc(var(--globe) * 0.175)",
+          "--cover": "calc(var(--globe) * 0.2)",
           width: "var(--globe)",
           height: "var(--globe)",
         } as CSSProperties
@@ -120,11 +120,16 @@ export function CoverGlobe() {
                   transform: `translateY(calc(var(--r) * ${rise})) rotateY(${turn}deg)`,
                 }}
               >
-                {/* Zero-sized, at the band's centre: the covers hang off this
-                    point, so rotating it turns the whole ring about the
-                    sphere's axis. */}
+                {/* Turning this turns the whole ring about the sphere's axis:
+                    it shares the band's centre, so it rotates about the pole
+                    rather than about itself. Full-size rather than a bare point
+                    at that centre, which is the obvious way to write it and is
+                    wrong -- preflight gives every img `max-width: 100%`, and
+                    100% of a zero-width parent is zero, so the covers collapse
+                    to nothing. `max-w-none` below makes them independent of
+                    this, but a real box is the honest containing block. */}
                 <div
-                  className="absolute left-1/2 top-1/2"
+                  className="absolute inset-0"
                   style={{
                     transformStyle: "preserve-3d",
                     animation: `globeTurn ${ROTATION} linear infinite`,
@@ -142,7 +147,7 @@ export function CoverGlobe() {
                         height={300}
                         loading="lazy"
                         decoding="async"
-                        className="absolute rounded-[3px] object-cover [backface-visibility:hidden]"
+                        className="absolute left-1/2 top-1/2 max-w-none rounded-[3px] object-cover [backface-visibility:hidden]"
                         style={{
                           width: "var(--cover)",
                           height: "var(--cover)",
@@ -150,7 +155,11 @@ export function CoverGlobe() {
                           // about its own middle rather than its corner.
                           marginLeft: "calc(var(--cover) / -2)",
                           marginTop: "calc(var(--cover) / -2)",
-                          transform: `rotateY(${((360 / count) * i).toFixed(3)}deg) translateZ(calc(var(--r) * ${reach}))`,
+                          // Ride the ring, then lie flat against the surface:
+                          // without the last term every tile stands upright,
+                          // the polar bands read as wide as the equator, and
+                          // the whole thing is a cushion rather than a body.
+                          transform: `rotateY(${((360 / count) * i).toFixed(3)}deg) translateZ(calc(var(--r) * ${reach})) rotateX(${lat}deg)`,
                         }}
                       />
                     );

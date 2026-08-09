@@ -32,6 +32,50 @@ const DOT =
 const GLINT =
   "radial-gradient(circle closest-side at 36% 32%, rgba(255,255,255,0.18), transparent 68%)";
 
+/**
+ * The swell that runs across the ribbon, right to left.
+ *
+ * Three bands rather than one, at unrelated speeds and on unrelated bob periods,
+ * because a single band is a slide: you see its period within a few seconds and
+ * it stops reading as water. Three of them beat against each other and the
+ * pattern doesn't visibly repeat.
+ *
+ * `tile` must divide 50 exactly. Each band is twice the viewport wide and drifts
+ * by half itself, so a tile of 25% travels exactly two tiles per cycle and lands
+ * where it began; anything that doesn't divide evenly leaves a seam that snaps
+ * once a loop.
+ *
+ * Only the field moves -- the dot grid above it is stationary, the way a sign
+ * animates by changing what its bulbs show rather than by moving the bulbs. It
+ * also keeps the dots from travelling across the pixel grid and shimmering.
+ */
+const RIPPLES = [
+  {
+    tint: "oklch(0.9 0.15 66 / 0.34)",
+    tile: "25%",
+    band: { top: "26%", height: "44%" },
+    drift: "28s",
+    bob: "11s",
+    lift: "3.5%",
+  },
+  {
+    tint: "oklch(0.62 0.2 28 / 0.4)",
+    tile: "12.5%",
+    band: { top: "8%", height: "56%" },
+    drift: "17s",
+    bob: "17s",
+    lift: "-4.5%",
+  },
+  {
+    tint: "oklch(0.16 0.02 40 / 0.58)",
+    tile: "10%",
+    band: { top: "44%", height: "48%" },
+    drift: "40s",
+    bob: "13s",
+    lift: "4%",
+  },
+];
+
 export function HalftoneField() {
   return (
     <div
@@ -154,6 +198,38 @@ export function HalftoneField() {
             />
           </g>
         </svg>
+
+        {/* Inside the mask, over the field: the swell is dotted along with
+            everything else, so it reads as the grid changing rather than as a
+            sheet of light sliding across the top of it. */}
+        {RIPPLES.map(({ tint, tile, band, drift, bob, lift }) => (
+          <div
+            key={drift}
+            className="absolute left-0 w-[200%]"
+            style={{
+              top: band.top,
+              height: band.height,
+              animation: `rippleDrift ${drift} linear infinite`,
+              willChange: "transform",
+            }}
+          >
+            {/* The bob is a second element so it composes with the drift instead
+                of overwriting it -- two animations on one element would each set
+                `transform` and the last one declared would win. */}
+            <div
+              className="h-full w-full"
+              style={
+                {
+                  "--lift": lift,
+                  animation: `rippleBob ${bob} ease-in-out infinite`,
+                  backgroundImage: `radial-gradient(ellipse 52% 58% at 50% 50%, ${tint}, transparent 70%)`,
+                  backgroundSize: `${tile} 100%`,
+                  backgroundRepeat: "repeat-x",
+                } as CSSProperties
+              }
+            />
+          </div>
+        ))}
 
         {/* Glint rides above the field but inside the same mask, so it lands on
             the dots and never in the gaps between them. */}

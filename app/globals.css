@@ -279,6 +279,32 @@ body {
   }
 }
 
+/* The halftone's ripples. Two transforms per band rather than one: the drift
+   carries it right to left, and the bob rides it up and down on an unrelated
+   period, so the two never resolve into a single repeating slide.
+
+   Each band is twice the viewport and its pattern tiles into exactly half of
+   that, which is why the drift ends at -50%: the band lands on a copy of where
+   it started, and the loop has no seam to hide. */
+@keyframes rippleDrift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes rippleBob {
+  0%,
+  100% {
+    transform: translateY(calc(var(--lift) * -1));
+  }
+  50% {
+    transform: translateY(var(--lift));
+  }
+}
+
 @keyframes shelfSheen {
   0% {
     transform: translateX(-140%) skewX(-18deg);

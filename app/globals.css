@@ -305,6 +305,18 @@ body {
   }
 }
 
+/* The shimmer. Travel is an exact whole number of the layer's own tiles rather
+   than a percentage of the screen, so the loop closes on a copy of itself at any
+   viewport width -- a percentage would only be seamless at one. */
+@keyframes shimmerDrift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--travel), 0, 0);
+  }
+}
+
 @keyframes shelfSheen {
   0% {
     transform: translateX(-140%) skewX(-18deg);

@@ -49,6 +49,52 @@ const GLINT =
  * animates by changing what its bulbs show rather than by moving the bulbs. It
  * also keeps the dots from travelling across the pixel grid and shimmering.
  */
+/**
+ * The bulbs going on and off.
+ *
+ * Each layer is a second field of dots at a pitch a few percent off the grid's,
+ * drifting across it. Because the two pitches disagree, a dot's alignment with
+ * the layer above it changes from one dot to the next -- so within a band you
+ * see individual dots fade up or die away in sequence, and the band itself
+ * travels. That beat is the shimmer, and it comes out of the mismatch rather
+ * than out of per-dot markup: a grid this fine is thousands of dots, which is
+ * thousands of elements and an animation each.
+ *
+ * The beat repeats every pitch/mismatch pixels, so the two axes are mismatched
+ * by very different amounts on purpose: ~5% across gives bands about 160px
+ * apart, while ~1% down puts the vertical beat far off screen. Matching the two
+ * would tile the shimmer into a lattice of identical cells, which reads as a
+ * mechanical grid rather than as light moving over a surface. The layers also
+ * disagree in opposite directions, so their bands never sit on top of each other
+ * and pulse as one.
+ *
+ * `steps` is how many of its own tiles the layer travels per loop, which is what
+ * keeps the loop seamless at any viewport width.
+ */
+const SHIMMER = [
+  // Dots dying back: the backdrop's own colour, so a covered bulb reads as
+  // dimmed rather than as a grey smudge laid over it. Deliberately short of
+  // opaque -- fully extinguishing them punches holes in the ribbon.
+  {
+    tint: "rgba(8,6,5,0.55)",
+    scaleX: 1.055,
+    scaleY: 1.014,
+    steps: 40,
+    duration: "21s",
+    softness: "58%",
+  },
+  // Dots flaring. Weaker still, because a bulb coming up brighter than the
+  // ribbon behind it stops looking like part of the same surface.
+  {
+    tint: "oklch(0.98 0.05 82 / 0.3)",
+    scaleX: 0.945,
+    scaleY: 0.99,
+    steps: 44,
+    duration: "34s",
+    softness: "52%",
+  },
+];
+
 const RIPPLES = [
   {
     tint: "oklch(0.9 0.15 66 / 0.34)",
@@ -229,6 +275,27 @@ export function HalftoneField() {
               }
             />
           </div>
+        ))}
+
+        {/* Wider than the container by exactly its own travel, so its right edge
+            starts off-screen and there is always pattern to drift in from. */}
+        {SHIMMER.map(({ tint, scaleX, scaleY, steps, duration, softness }) => (
+          <div
+            key={duration}
+            className="absolute inset-y-0 left-0"
+            style={
+              {
+                "--tile": `calc(var(--pitch) * ${scaleX})`,
+                "--travel": `calc(var(--tile) * -${steps})`,
+                width: `calc(100% + var(--tile) * ${steps})`,
+                backgroundImage: `radial-gradient(circle closest-side at 50% 50%, ${tint} 0 ${softness}, transparent 84%)`,
+                backgroundSize: `var(--tile) calc(var(--pitch) * ${scaleY})`,
+                backgroundRepeat: "repeat",
+                animation: `shimmerDrift ${duration} linear infinite`,
+                willChange: "transform",
+              } as CSSProperties
+            }
+          />
         ))}
 
         {/* Glint rides above the field but inside the same mask, so it lands on

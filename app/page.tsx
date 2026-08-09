@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 
+import { HalftoneField } from "./halftone-field";
+
 /**
  * Where the deck actually sits inside turntable_image.png, measured from the
  * file rather than guessed at: it is 510x489, and the artwork occupies only
@@ -63,6 +65,8 @@ export default function Home() {
         } as CSSProperties
       }
     >
+      <HalftoneField />
+
       {/* The frame starts the headline about a fifth of the way down. Held as a
           fraction so it stays a fifth on any screen, with a floor for very short
           windows where a proportional gap would leave nothing for the copy. */}

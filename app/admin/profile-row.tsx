@@ -130,7 +130,7 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
               <button
                 type="button"
                 onClick={() => setConfirmingDelete((open) => !open)}
-                className="rounded-lg px-2 py-1.5 text-xs text-ink-faint transition-colors hover:text-[var(--danger)]"
+                className="rounded-lg px-2 py-1.5 text-xs font-medium text-ink-faint transition-colors hover:text-[var(--danger)]"
               >
                 Delete
               </button>

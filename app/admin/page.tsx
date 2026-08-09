@@ -1,15 +1,22 @@
 import Link from "next/link";
 
 import { requireAdmin } from "@/lib/admin";
-import { getAdminMetrics, type SignupTrend } from "@/lib/admin-metrics";
+import { getAdminMetrics } from "@/lib/admin-metrics";
 import { prisma } from "@/lib/prisma";
 
+import { MetricGrid } from "./metric-grid";
 import { ProfileRow, type AdminProfile } from "./profile-row";
 
 // Always live: an admin acting on stale moderation data is worse than a slow page.
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 25;
+/**
+ * Deliberately small. Nobody moderates by scrolling -- they arrive knowing which
+ * account they want and search for it -- so a long first page costs render time
+ * and a wall of rows to find nothing faster. Each page is a bounded skip/take, so
+ * this is the number of rows fetched, not just the number shown.
+ */
+const PAGE_SIZE = 10;
 
 export default async function AdminPage(props: PageProps<"/admin">) {
   await requireAdmin();
@@ -112,46 +119,29 @@ export default async function AdminPage(props: PageProps<"/admin">) {
   const totalPages = Math.max(1, Math.ceil(matching / PAGE_SIZE));
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-10">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="serif text-3xl">Admin</h1>
-          <p className="mt-1 text-sm text-ink-dim">
-            Moderation and site overview.
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+      {/* Wraps rather than staying on one line: at 360px "Back to dashboard"
+          and the title share about 300px between them and the link ends up
+          against the screen edge. */}
+      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h1 className="serif text-3xl">Admin</h1>
         <Link
           href="/dashboard"
-          className="text-sm text-ink-faint transition-colors hover:text-ink"
+          className="text-xs text-ink-faint transition-colors hover:text-ink sm:text-sm"
         >
           Back to dashboard
         </Link>
+        <p className="w-full text-sm text-ink-dim">
+          Moderation and site overview.
+        </p>
       </header>
 
-      <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat label="Visits" value={metrics.totalVisits} />
-        <Stat label="Signed up" value={metrics.totalUsers} />
-        <Stat label="Active" value={metrics.activeUsers} />
-        <Stat
-          label="Suspended"
-          value={metrics.suspendedUsers}
-          tone={metrics.suspendedUsers > 0 ? "warn" : undefined}
-        />
-        <Stat label="Deleted" value={metrics.deletedUsers} />
-      </section>
-
-      <section className="mt-3 grid gap-3 sm:grid-cols-2">
-        <TrendStat label="Signups, week on week" trend={metrics.week} />
-        <TrendStat label="Signups, month on month" trend={metrics.month} />
-      </section>
-
-      {/* Inventory rather than health: useful to have, but not what the page is
-          being opened to find out. */}
-      <section className="mt-3 grid gap-3 sm:grid-cols-3">
-        <Stat label="Profiles" value={profileCount} muted />
-        <Stat label="Playlists" value={playlistCount} muted />
-        <Stat label="Connections" value={connectionCount} muted />
-      </section>
+      <MetricGrid
+        metrics={metrics}
+        profileCount={profileCount}
+        playlistCount={playlistCount}
+        connectionCount={connectionCount}
+      />
 
       <form className="mt-8 flex gap-2">
         <input
@@ -168,8 +158,12 @@ export default async function AdminPage(props: PageProps<"/admin">) {
         </button>
       </form>
 
-      <p className="mt-6 text-sm text-ink-faint">
-        {matching} profile{matching === 1 ? "" : "s"}
+      {/* The range, not just the total: with ten to a page the useful question
+          is which ten these are. */}
+      <p className="mt-5 text-sm text-ink-faint">
+        {matching === 0
+          ? "No profiles"
+          : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, matching)} of ${matching}`}
         {query ? ` matching "${query}"` : ""}
       </p>
 
@@ -197,75 +191,6 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           </PageLink>
         </nav>
       )}
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-  muted,
-}: {
-  label: string;
-  value: number;
-  tone?: "warn";
-  muted?: boolean;
-}) {
-  return (
-    <div className="panel px-4 py-3">
-      <p className="text-xs text-ink-dim">{label}</p>
-      <p
-        className={`mt-1 font-semibold tabular-nums ${
-          muted ? "text-base text-ink-dim" : "text-xl"
-        } ${tone === "warn" ? "text-[var(--warn)]" : ""}`}
-      >
-        {value.toLocaleString()}
-      </p>
-    </div>
-  );
-}
-
-/**
- * A period's signups against the one before it. The comparison is the point --
- * a bare "11 this week" says nothing without last week beside it.
- */
-function TrendStat({ label, trend }: { label: string; trend: SignupTrend }) {
-  const { current, previous, changePercent } = trend;
-  const direction =
-    changePercent === null || changePercent === 0
-      ? "flat"
-      : changePercent > 0
-        ? "up"
-        : "down";
-
-  return (
-    <div className="panel px-4 py-3">
-      <p className="text-xs text-ink-dim">{label}</p>
-      <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-xl font-semibold tabular-nums">
-          {current.toLocaleString()}
-        </p>
-        {changePercent !== null && (
-          <span
-            className="text-xs font-semibold tabular-nums"
-            style={{
-              color:
-                direction === "up"
-                  ? "var(--ok)"
-                  : direction === "down"
-                    ? "var(--danger)"
-                    : "var(--ink-faint)",
-            }}
-          >
-            {changePercent > 0 ? "+" : ""}
-            {changePercent}%
-          </span>
-        )}
-      </div>
-      <p className="mt-1 text-xs text-ink-faint tabular-nums">
-        {previous.toLocaleString()} in the period before
-      </p>
     </div>
   );
 }

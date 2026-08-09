@@ -154,15 +154,23 @@ body {
     cursor: not-allowed;
   }
 
+  /* Flat, not a gradient. The gold call to action is the one thing on a page
+     that should look lit; a destructive control borrowing the same treatment
+     reads as more inviting than it is. Solid --danger, and medium rather than
+     bold -- at 12px on a red pill, 700 was shouting. */
   .btn-danger {
     border-radius: 100px;
     padding: 0.45rem 0.9rem;
-    font-weight: 700;
+    font-weight: 500;
     font-size: 0.75rem;
     color: #1a0d0d;
-    background: linear-gradient(180deg, oklch(0.75 0.16 25), oklch(0.62 0.18 25));
+    background: var(--danger);
     border: none;
     cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: oklch(0.64 0.17 25);
   }
   .btn-danger:disabled {
     opacity: 0.45;

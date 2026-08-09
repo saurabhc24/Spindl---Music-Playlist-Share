@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { requireAdmin } from "@/lib/admin";
+import { getAdminMetrics, type SignupTrend } from "@/lib/admin-metrics";
 import { prisma } from "@/lib/prisma";
 
 import { ProfileRow, type AdminProfile } from "./profile-row";
@@ -33,27 +34,17 @@ export default async function AdminPage(props: PageProps<"/admin">) {
     : {};
 
   const [
-    userCount,
+    metrics,
     profileCount,
     playlistCount,
     connectionCount,
-    signupsThisWeek,
-    suspendedCount,
     matching,
     profiles,
   ] = await Promise.all([
-    prisma.user.count(),
+    getAdminMetrics(),
     prisma.profile.count(),
     prisma.playlist.count(),
     prisma.connectedAccount.count(),
-    // The cutoff is computed by the database rather than from Date.now() here:
-    // reading the clock during render is impure, and this also sidesteps any
-    // skew between the app server's clock and the database's.
-    prisma.$queryRaw<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM "User"
-      WHERE "createdAt" >= now() - interval '7 days'
-    `.then((rows) => rows[0]?.n ?? 0),
-    prisma.profile.count({ where: { suspendedAt: { not: null } } }),
     prisma.profile.count({ where }),
     prisma.profile.findMany({
       where,
@@ -132,13 +123,27 @@ export default async function AdminPage(props: PageProps<"/admin">) {
         </Link>
       </header>
 
-      <section className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label="Users" value={userCount} />
-        <Stat label="Profiles" value={profileCount} />
-        <Stat label="Playlists" value={playlistCount} />
-        <Stat label="Connections" value={connectionCount} />
-        <Stat label="New this week" value={signupsThisWeek} />
-        <Stat label="Suspended" value={suspendedCount} tone={suspendedCount > 0 ? "warn" : undefined} />
+      <section className="mt-8 grid gap-3 sm:grid-cols-3">
+        <Stat label="Signed up" value={metrics.totalUsers} />
+        <Stat label="Active" value={metrics.activeUsers} />
+        <Stat
+          label="Suspended"
+          value={metrics.suspendedUsers}
+          tone={metrics.suspendedUsers > 0 ? "warn" : undefined}
+        />
+      </section>
+
+      <section className="mt-3 grid gap-3 sm:grid-cols-2">
+        <TrendStat label="Signups, week on week" trend={metrics.week} />
+        <TrendStat label="Signups, month on month" trend={metrics.month} />
+      </section>
+
+      {/* Inventory rather than health: useful to have, but not what the page is
+          being opened to find out. */}
+      <section className="mt-3 grid gap-3 sm:grid-cols-3">
+        <Stat label="Profiles" value={profileCount} muted />
+        <Stat label="Playlists" value={playlistCount} muted />
+        <Stat label="Connections" value={connectionCount} muted />
       </section>
 
       <form className="mt-8 flex gap-2">
@@ -193,20 +198,66 @@ function Stat({
   label,
   value,
   tone,
+  muted,
 }: {
   label: string;
   value: number;
   tone?: "warn";
+  muted?: boolean;
 }) {
   return (
     <div className="panel px-4 py-3">
       <p className="text-xs text-ink-dim">{label}</p>
       <p
-        className={`mt-1 text-xl font-semibold tabular-nums ${
-          tone === "warn" ? "text-[var(--warn)]" : ""
-        }`}
+        className={`mt-1 font-semibold tabular-nums ${
+          muted ? "text-base text-ink-dim" : "text-xl"
+        } ${tone === "warn" ? "text-[var(--warn)]" : ""}`}
       >
-        {value}
+        {value.toLocaleString()}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * A period's signups against the one before it. The comparison is the point --
+ * a bare "11 this week" says nothing without last week beside it.
+ */
+function TrendStat({ label, trend }: { label: string; trend: SignupTrend }) {
+  const { current, previous, changePercent } = trend;
+  const direction =
+    changePercent === null || changePercent === 0
+      ? "flat"
+      : changePercent > 0
+        ? "up"
+        : "down";
+
+  return (
+    <div className="panel px-4 py-3">
+      <p className="text-xs text-ink-dim">{label}</p>
+      <div className="mt-1 flex items-baseline gap-2">
+        <p className="text-xl font-semibold tabular-nums">
+          {current.toLocaleString()}
+        </p>
+        {changePercent !== null && (
+          <span
+            className="text-xs font-semibold tabular-nums"
+            style={{
+              color:
+                direction === "up"
+                  ? "var(--ok)"
+                  : direction === "down"
+                    ? "var(--danger)"
+                    : "var(--ink-faint)",
+            }}
+          >
+            {changePercent > 0 ? "+" : ""}
+            {changePercent}%
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-ink-faint tabular-nums">
+        {previous.toLocaleString()} in the period before
       </p>
     </div>
   );

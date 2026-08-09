@@ -61,7 +61,9 @@ export default async function AdminPage(props: PageProps<"/admin">) {
         suspendedAt: true,
         suspendedReason: true,
         createdAt: true,
-        user: { select: { email: true } },
+        user: {
+          select: { email: true, deletedEmail: true, deletedAt: true },
+        },
       },
     }),
   ]);
@@ -95,8 +97,11 @@ export default async function AdminPage(props: PageProps<"/admin">) {
     username: profile.username,
     usernameNormalized: profile.usernameNormalized,
     displayName: profile.displayName,
-    email: profile.user.email,
+    // A deleted account has no `email` -- it was moved aside to free the unique
+    // index. Falling back keeps the admin list able to say who this was.
+    email: profile.user.email ?? profile.user.deletedEmail,
     isPublic: profile.isPublic,
+    deletedAt: profile.user.deletedAt?.toISOString() ?? null,
     suspendedAt: profile.suspendedAt?.toISOString() ?? null,
     suspendedReason: profile.suspendedReason,
     playlistCount: playlistByUser.get(profile.userId) ?? 0,
@@ -123,7 +128,8 @@ export default async function AdminPage(props: PageProps<"/admin">) {
         </Link>
       </header>
 
-      <section className="mt-8 grid gap-3 sm:grid-cols-3">
+      <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Stat label="Visits" value={metrics.totalVisits} />
         <Stat label="Signed up" value={metrics.totalUsers} />
         <Stat label="Active" value={metrics.activeUsers} />
         <Stat
@@ -131,6 +137,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           value={metrics.suspendedUsers}
           tone={metrics.suspendedUsers > 0 ? "warn" : undefined}
         />
+        <Stat label="Deleted" value={metrics.deletedUsers} />
       </section>
 
       <section className="mt-3 grid gap-3 sm:grid-cols-2">

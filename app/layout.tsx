@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 import { showcaseFonts } from "@/app/fonts";
 
+import { VisitBeacon } from "./visit-beacon";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,6 +27,10 @@ export default function RootLayout({
     <html lang="en" className={`${showcaseFonts} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         {children}
+        {/* Vercel's own count stays -- it is the one with bot filtering and a
+            dashboard. This is the same number in our database, so the admin page
+            doesn't depend on a third party being up or on a plan tier. */}
+        <VisitBeacon />
         <Analytics />
       </body>
     </html>

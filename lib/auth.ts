@@ -111,6 +111,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: buildProviders(),
   callbacks: {
+    /**
+     * The gate on deleted accounts.
+     *
+     * A soft-deleted user keeps its Account rows, so the adapter can still match
+     * an OAuth identity to it and would happily sign the person back in. Their
+     * sessions are dropped at deletion, but that only ends the session they had
+     * -- this is what stops them starting another.
+     *
+     * Deliberately *not* solved by severing the Account rows instead. That would
+     * let the same OAuth identity sign up fresh, which for a moderation delete
+     * is precisely the wrong outcome; it would also break restore, since Auth.js
+     * refuses to auto-link an OAuth account to an existing email.
+     *
+     * One extra query per sign-in, which is a rare event -- unlike the session
+     * callback below, which runs on every authenticated request.
+     */
+    async signIn({ user }) {
+      // No id yet means a brand-new signup, which by definition isn't deleted.
+      if (!user?.id) return true;
+
+      const existing = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { deletedAt: true },
+      });
+
+      return !existing?.deletedAt;
+    },
     session({ session, user }) {
       // Expose the DB user id so server components can query Profile/Playlist.
       if (session.user) session.user.id = user.id;

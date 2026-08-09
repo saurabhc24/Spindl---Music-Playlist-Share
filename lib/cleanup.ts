@@ -37,6 +37,10 @@ export async function runCleanup({
   const abandonedWhere = {
     profile: { is: null },
     createdAt: { lt: abandonedCutoff },
+    // A deleted account with no username would otherwise match this and get
+    // hard-deleted a month later, silently taking the deletion record with it
+    // and walking the admin page's deleted count backwards.
+    deletedAt: null,
   };
 
   if (dryRun) {

@@ -20,11 +20,20 @@ export type SignupTrend = {
 };
 
 export type AdminMetrics = {
-  /** Everyone who has ever signed up, whether or not they claimed a username. */
+  /**
+   * Every visit since the beacon shipped, not every page view: the beacon fires
+   * once per browser session, so opening five pages is one visit.
+   */
+  totalVisits: number;
+  /**
+   * Everyone who has ever signed up, whether or not they claimed a username,
+   * and including accounts since deleted -- they still signed up.
+   */
   totalUsers: number;
-  /** Signed up and not suspended. Deleted accounts are gone, not counted here. */
+  /** Signed up, not suspended, not deleted. */
   activeUsers: number;
   suspendedUsers: number;
+  deletedUsers: number;
   week: SignupTrend;
   month: SignupTrend;
 };
@@ -46,9 +55,35 @@ function trend(current: number, previous: number): SignupTrend {
 }
 
 export async function getAdminMetrics(): Promise<AdminMetrics> {
-  const [totalUsers, suspendedUsers, buckets] = await Promise.all([
+  const [
+    totalVisits,
+    totalUsers,
+    activeUsers,
+    suspendedUsers,
+    deletedUsers,
+    buckets,
+  ] = await Promise.all([
+    prisma
+      .$queryRaw<{ n: number }[]>`
+        SELECT coalesce(sum("views"), 0)::int AS n FROM "DailyVisit"
+      `
+      .then((rows) => rows[0]?.n ?? 0),
     prisma.user.count(),
-    prisma.profile.count({ where: { suspendedAt: { not: null } } }),
+    // Counted directly rather than as total minus suspended minus deleted: an
+    // account can be both suspended and deleted, and that arithmetic would
+    // subtract it twice and quietly under-report active users.
+    prisma.user.count({
+      where: {
+        deletedAt: null,
+        // Someone still mid-signup has no Profile and so cannot be suspended.
+        // They are active; a filter on profile.suspendedAt alone would drop them.
+        OR: [{ profile: { is: null } }, { profile: { suspendedAt: null } }],
+      },
+    }),
+    prisma.profile.count({
+      where: { suspendedAt: { not: null }, user: { deletedAt: null } },
+    }),
+    prisma.user.count({ where: { deletedAt: { not: null } } }),
     // All four windows in one pass, off the database's clock rather than
     // Date.now(): reading the clock during render is impure, and four separate
     // queries could each land on a different second and fail to add up. The
@@ -77,13 +112,11 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
   const row = buckets[0];
 
   return {
+    totalVisits,
     totalUsers,
+    activeUsers,
     suspendedUsers,
-    // Suspension is a flag on Profile, so only someone who claimed a username
-    // can hold it -- which is why this subtracts from the user count directly
-    // rather than counting unsuspended profiles, a figure that would quietly
-    // exclude everyone still mid-signup.
-    activeUsers: totalUsers - suspendedUsers,
+    deletedUsers,
     week: trend(row?.weekCurrent ?? 0, row?.weekPrevious ?? 0),
     month: trend(row?.monthCurrent ?? 0, row?.monthPrevious ?? 0),
   };

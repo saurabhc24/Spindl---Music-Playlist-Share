@@ -24,12 +24,31 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  /// Set when an admin deletes the account. The row survives so the deletion can
+  /// be counted and undone, which means every path that could resurface the
+  /// account has to exclude it -- the public profile lookup, the rename
+  /// redirect, the cleanup cron, and sign-in itself.
+  deletedAt DateTime?
+  /// Where `email` goes when the account is deleted.
+  ///
+  /// `email` carries a unique index, so leaving the address in place would bar
+  /// that person from ever signing up again -- the one genuinely destructive
+  /// thing a *reversible* delete could do. Moving it here frees the index and
+  /// still leaves the address on the row, so a restore can put it back.
+  deletedEmail    String?
+  deletedReason   String?   @db.VarChar(280)
+
   accounts          Account[]
   sessions          Session[]
   profile           Profile?
   connectedAccounts ConnectedAccount[]
   playlists         Playlist[]
   usernameHistory   UsernameHistory[]
+
+  // No @@index([deletedAt]) here on purpose. Deleted rows are a small minority
+  // and every query on this column looks for exactly those, so the index wants
+  // to be partial -- which the schema language can't express. It is created in
+  // SQL by the migration instead, the same way Profile_visible_idx is.
 }
 
 model Account {
@@ -148,6 +167,21 @@ model ConnectedAccount {
   playlists Playlist[]
 
   @@unique([userId, provider])
+}
+
+/// One row per day, incremented by the visit beacon.
+///
+/// A row per visit would be the obvious shape and the wrong one: it grows
+/// without bound, and nothing reads this at a resolution finer than a day. The
+/// date is the primary key, so the beacon is a single upsert with no lookup and
+/// no way to write two rows for one day.
+///
+/// Counted client-side rather than during render because the public profile page
+/// is ISR-cached -- a render-time count would either miss every cached view or
+/// force the page dynamic, and the cache is the whole reason that page is cheap.
+model DailyVisit {
+  day   DateTime @id @db.Date
+  views Int      @default(0)
 }
 
 model Playlist {

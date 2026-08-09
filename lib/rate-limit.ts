@@ -196,4 +196,10 @@ export const RATE_LIMITS = {
 
   profilePerAccount: { limit: 30, windowSeconds: 60 * 60 },
   profilePerIp: { limit: 60, windowSeconds: 60 * 60 },
+
+  // The visit beacon fires once per browser session, so a real person costs one
+  // hit. Generous because a school or office behind one NAT is many real people
+  // sharing an address -- this is here to stop a script inflating the counter,
+  // not to police traffic.
+  visitPerIp: { limit: 240, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, RateLimitRule>;

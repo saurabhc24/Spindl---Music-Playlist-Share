@@ -48,10 +48,27 @@ const LIFT = (DECK_TOP - HEADROOM) * ASPECT;
  * --accent, #c9bd9d is --ink-dim. The backdrop is the one deliberate departure --
  * the scene gradient every other page uses, rather than the frame's flat
  * #272727, so the landing page stays in the same room as the rest of the app.
+ *
+ * Every element carries an id, so a change can be asked for by name instead of
+ * by description:
+ *
+ *   #landing-scene         the full-screen frame everything sits in
+ *   #halftone                the animated backdrop (see halftone-field.tsx)
+ *   #landing-content         the centred column, and its padding
+ *     #landing-headline        "Everything you've got spinning"
+ *     #landing-subcopy         the line under it
+ *     #landing-void            the deliberate gap the design leaves
+ *     #landing-actions         the block at the foot
+ *       #landing-cta             "Claim your link"
+ *       #landing-signin          "Already have an account? Sign In"
+ *       #landing-wordmark        "SpindlShare"
+ *   #landing-deck          the strip the turntable shows through
+ *     #landing-deck-image    the artwork inside it
  */
 export default function Home() {
   return (
     <div
+      id="landing-scene"
       data-shelf-scene
       className="scene relative flex h-[100dvh] flex-col overflow-hidden"
       style={
@@ -70,25 +87,44 @@ export default function Home() {
       {/* The frame starts the headline about a fifth of the way down. Held as a
           fraction so it stays a fifth on any screen, with a floor for very short
           windows where a proportional gap would leave nothing for the copy. */}
-      <main className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[var(--band)] pt-[max(64px,19vh)]">
-        <h1 className="display max-w-[19rem] text-[clamp(26px,4.4vh,36px)] leading-[1.12] sm:text-[40px]">
+      <main
+        id="landing-content"
+        className="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col px-7 pb-[var(--band)] pt-[max(64px,19vh)]"
+      >
+        <h1
+          id="landing-headline"
+          className="display max-w-[19rem] text-[clamp(26px,4.4vh,36px)] leading-[1.12] sm:text-[40px]"
+        >
           Everything you&apos;ve got spinning
         </h1>
-        <p className="mt-6 max-w-[17rem] text-[15px] leading-relaxed text-ink-dim">
+        <p
+          id="landing-subcopy"
+          className="mt-6 max-w-[17rem] text-[15px] leading-relaxed text-ink"
+        >
           Your playlist taste, curated into one shareable shelf — built for
           socials
         </p>
 
         {/* The frame leaves a deliberate void here, pushing the actions to the
             foot of the screen rather than stacking them under the copy. */}
-        <div className="flex-1" />
+        <div id="landing-void" className="flex-1" />
 
-        <div className="flex flex-col items-center gap-3.5 pt-8">
-          <Link href="/login" className="btn-gold !px-6 !py-3">
+        <div
+          id="landing-actions"
+          className="flex flex-col items-center gap-3.5 pt-8"
+        >
+          <Link
+            id="landing-cta"
+            href="/login"
+            className="btn-gold !px-6 !py-3"
+          >
             Claim your link
           </Link>
 
-          <p className="flex flex-wrap items-center justify-center gap-1 text-[11px] text-ink-dim">
+          <p
+            id="landing-signin"
+            className="flex flex-wrap items-center justify-center gap-1 text-[11px] text-ink-dim"
+          >
             Already have an account?{" "}
             <Link
               href="/login"
@@ -99,7 +135,10 @@ export default function Home() {
           </p>
 
           {/* The frame sets the wordmark in Maxi, not the headline's Midi. */}
-          <span className="wordmark mt-3 text-[17px] tracking-wide">
+          <span
+            id="landing-wordmark"
+            className="wordmark mt-3 text-[17px] tracking-wide"
+          >
             SpindlShare
           </span>
         </div>
@@ -117,6 +156,7 @@ export default function Home() {
           desktop, which made it ~1950px tall, and the short band then showed a
           hugely magnified sliver of its middle. */}
       <div
+        id="landing-deck"
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--band)] select-none overflow-hidden"
       >
@@ -126,6 +166,7 @@ export default function Home() {
             third back under the deck and held it clear of the edge. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          id="landing-deck-image"
           src="/turntable_image.png"
           alt=""
           width={ART.width}

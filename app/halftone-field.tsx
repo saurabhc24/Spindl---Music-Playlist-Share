@@ -16,6 +16,17 @@ import type { CSSProperties } from "react";
  * any screen. It also costs no request and no bytes beyond the markup.
  *
  * No client JavaScript -- gradients and a mask, so the page stays static.
+ *
+ * Every layer carries an id, painted back to front, so a change can be asked for
+ * by name instead of by description:
+ *
+ *   #halftone            the whole backdrop, and the colour behind the grid
+ *   #halftone-grid         the mask that turns everything inside it into dots
+ *   #halftone-ribbon         the SVG colour field -- the red and amber shape
+ *   #halftone-ripple-1..3    the swells drifting right to left
+ *   #halftone-shimmer-1..2   the bulbs dimming (1) and flaring (2)
+ *   #halftone-glint          the highlight on each individual dot
+ *   #halftone-scrim        the darkening over the text, outside the grid
  */
 
 /** The grid's pitch. Dots are ~80% of a cell, which is the reference's spacing. */
@@ -125,11 +136,13 @@ const RIPPLES = [
 export function HalftoneField() {
   return (
     <div
+      id="halftone"
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 select-none overflow-hidden"
       style={{ "--pitch": PITCH, background: "#080605" } as CSSProperties}
     >
       <div
+        id="halftone-grid"
         className="absolute inset-0"
         style={{
           maskImage: DOT,
@@ -143,6 +156,7 @@ export function HalftoneField() {
         {/* `slice` so the composition covers like a background-size: cover image
             instead of letterboxing into a window it was never drawn for. */}
         <svg
+          id="halftone-ribbon"
           className="h-full w-full"
           viewBox="0 0 736 1472"
           preserveAspectRatio="xMidYMid slice"
@@ -248,9 +262,10 @@ export function HalftoneField() {
         {/* Inside the mask, over the field: the swell is dotted along with
             everything else, so it reads as the grid changing rather than as a
             sheet of light sliding across the top of it. */}
-        {RIPPLES.map(({ tint, tile, band, drift, bob, lift }) => (
+        {RIPPLES.map(({ tint, tile, band, drift, bob, lift }, i) => (
           <div
             key={drift}
+            id={`halftone-ripple-${i + 1}`}
             className="absolute left-0 w-[200%]"
             style={{
               top: band.top,
@@ -279,9 +294,10 @@ export function HalftoneField() {
 
         {/* Wider than the container by exactly its own travel, so its right edge
             starts off-screen and there is always pattern to drift in from. */}
-        {SHIMMER.map(({ tint, scaleX, scaleY, steps, duration, softness }) => (
+        {SHIMMER.map(({ tint, scaleX, scaleY, steps, duration, softness }, i) => (
           <div
             key={duration}
+            id={`halftone-shimmer-${i + 1}`}
             className="absolute inset-y-0 left-0"
             style={
               {
@@ -301,6 +317,7 @@ export function HalftoneField() {
         {/* Glint rides above the field but inside the same mask, so it lands on
             the dots and never in the gaps between them. */}
         <div
+          id="halftone-glint"
           className="absolute inset-0"
           style={{
             backgroundImage: GLINT,
@@ -318,6 +335,7 @@ export function HalftoneField() {
           the very top and foot. The fold keeps its full brightness, because
           nothing is set over it. */}
       <div
+        id="halftone-scrim"
         className="absolute inset-0"
         style={{
           background: `radial-gradient(124% 44% at 4% 25%, rgba(8,6,5,0.8) 0%, rgba(8,6,5,0.52) 44%, rgba(8,6,5,0) 78%),

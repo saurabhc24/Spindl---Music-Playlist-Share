@@ -80,17 +80,9 @@ export function LandingActions({ children }: { children: ReactNode }) {
       >
         <div
           id="signin-card-panel"
-          className="mx-auto w-full max-w-[26rem] rounded-t-[28px] border border-b-0 border-[var(--line-strong)] bg-[var(--panel-solid)] px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4 sm:rounded-[28px] sm:border-b sm:pb-8"
+          className="mx-auto w-full max-w-[26rem] rounded-t-[28px] border border-b-0 border-[var(--line-strong)] bg-[var(--panel-solid)] px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-7 sm:rounded-[28px] sm:border-b sm:pb-8"
         >
-          {/* Reads as something to drag on a phone, which is what a sheet
-              arriving from the bottom edge implies it is. Decorative -- the
-              close button below is the real control. */}
-          <div
-            aria-hidden="true"
-            className="mx-auto h-1 w-10 rounded-full bg-[var(--line-strong)] sm:hidden"
-          />
-
-          <div className="mt-4 flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <h2 id="signin-card-title" className="heading text-2xl">
                 Sign in

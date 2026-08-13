@@ -250,6 +250,44 @@ body {
     }
   }
 
+  /* The new-account welcome. Fills the screen and fades both ways, using the
+     same allow-discrete pairing as .sheet -- without it a <dialog> is simply
+     display:none on close and the exit fade never gets a frame to run in. */
+  .welcome {
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: none;
+    color: var(--ink);
+    background: radial-gradient(
+      120% 80% at 50% 30%,
+      oklch(0.22 0.02 70) 0%,
+      oklch(0.12 0.015 65) 45%,
+      #060504 100%
+    );
+
+    opacity: 0;
+    transition:
+      opacity 0.5s ease,
+      overlay 0.5s allow-discrete,
+      display 0.5s allow-discrete;
+  }
+  .welcome[open] {
+    opacity: 1;
+  }
+  @starting-style {
+    .welcome[open] {
+      opacity: 0;
+    }
+  }
+  /* The dialog covers the viewport, so this only shows through its own fade. */
+  .welcome::backdrop {
+    background: #060504;
+  }
+
   .field {
     width: 100%;
     border-radius: 10px;
@@ -390,15 +428,21 @@ body {
 
 /* The whole point of the moment is motion, so with motion refused there is
    nothing to soften -- the greeting simply appears, and the dashboard under it
-   is not animated in at all. */
+   is not animated in at all.
+
+   The dialog's own opacity is left to .welcome[open] rather than forced to 1
+   here: that rule is what hides it once closed, and overriding it would leave a
+   dismissed welcome painted over the page. Only its duration is collapsed. */
 @media (prefers-reduced-motion: reduce) {
   .rise,
-  [data-welcome] *,
-  [data-welcome] {
+  [data-welcome],
+  [data-welcome] * {
     animation: none !important;
     translate: none !important;
     scale: none !important;
-    opacity: 1;
+  }
+  [data-welcome] {
+    transition-duration: 0.01ms !important;
   }
 }
 

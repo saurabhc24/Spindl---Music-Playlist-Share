@@ -93,7 +93,12 @@ export async function claimUsername(
   // the edge after the page went live.
   revalidatePath(`/${normalized}`);
 
-  redirect("/dashboard");
+  // The flag rides in the URL rather than in a column, because this is the only
+  // place that can know the account was created *just now* -- and the dashboard
+  // strips it the moment it plays, so it can't be replayed by a refresh. The
+  // other two returns above redirect without it: they are the double-submit and
+  // already-claimed paths, and neither is a new account.
+  redirect("/dashboard?welcome=1");
 }
 
 function isUniqueConstraintError(error: unknown): boolean {

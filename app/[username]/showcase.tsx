@@ -283,8 +283,8 @@ export function Showcase({
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
-                fontFamily: "var(--font-instrument-serif), serif",
-                fontWeight: 400,
+                fontFamily: "var(--font-ubuntu), system-ui, sans-serif",
+                fontWeight: 500,
                 fontSize: 27,
                 lineHeight: 1,
                 margin: "0 0 3px",
@@ -459,7 +459,8 @@ export function Showcase({
               opacity: active === null ? 0 : 1,
               transition: "opacity 0.5s",
               textAlign: "right",
-              fontFamily: "var(--font-instrument-serif), serif",
+              fontFamily: "var(--font-ubuntu), system-ui, sans-serif",
+              fontWeight: 500,
               fontSize: 22,
               lineHeight: 1,
               color: "oklch(0.95 0.01 85)",
@@ -756,7 +757,8 @@ export function Showcase({
                             <div
                               style={{
                                 fontFamily:
-                                  "var(--font-instrument-serif), serif",
+                                  "var(--font-ubuntu), system-ui, sans-serif",
+                                fontWeight: 500,
                                 fontSize: 19,
                                 lineHeight: 1.1,
                                 color: "oklch(0.95 0.01 85)",
@@ -851,7 +853,8 @@ export function Showcase({
                   >
                     <span
                       style={{
-                        fontFamily: "var(--font-instrument-serif), serif",
+                        fontFamily: "var(--font-ubuntu), system-ui, sans-serif",
+                        fontWeight: 500,
                         fontSize: 16,
                         color: "oklch(0.93 0.03 85)",
                       }}

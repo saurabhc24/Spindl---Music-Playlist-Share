@@ -89,12 +89,10 @@ body {
     letter-spacing: -0.005em;
   }
 
-  /* Still loaded and still used, but only by the public profile, which sets it
-     inline rather than through a class. */
-  .serif {
-    font-family: var(--font-instrument-serif), serif;
-    font-weight: 400;
-  }
+  /* Instrument Serif has no class any more. It survives on the public profile
+     for three single letters -- the avatar monogram and the stand-in for a
+     playlist with no cover art -- which set it inline. Those are letterforms
+     rather than headings, and a serif initial is the point of them. */
 
   /* Self-hosted display faces. Two families rather than two weights, so the
      headline and the wordmark cannot share a rule. */

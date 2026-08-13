@@ -204,8 +204,8 @@ export default async function PublicProfilePage(
 
         <h1
           style={{
-            fontFamily: "var(--font-instrument-serif), serif",
-            fontWeight: 400,
+            fontFamily: "var(--font-ubuntu), system-ui, sans-serif",
+            fontWeight: 500,
             fontSize: 34,
             lineHeight: 1.1,
             margin: "22px 0 6px",

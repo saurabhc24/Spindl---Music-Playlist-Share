@@ -43,7 +43,7 @@ export default async function PlaylistsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="serif text-3xl">Playlists</h1>
+        <h1 className="heading text-3xl">Playlists</h1>
         <p className="mt-2 text-sm text-ink-dim">
           Toggle which playlists appear on your public page, and drag to set the
           order they appear in.
@@ -54,7 +54,7 @@ export default async function PlaylistsPage() {
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--line)] px-6 py-12 text-center">
-          <h2 className="serif text-xl">No playlists yet</h2>
+          <h2 className="heading text-xl">No playlists yet</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-dim">
             Paste a playlist link above, or connect Spotify or YouTube and
             we&apos;ll import your playlists here.

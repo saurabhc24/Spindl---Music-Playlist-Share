@@ -20,7 +20,7 @@ export default function VerifyRequestPage() {
             />
           </svg>
         </div>
-        <h1 className="serif mt-6 text-3xl">
+        <h1 className="heading mt-6 text-3xl">
           Check your email
         </h1>
         <p className="mt-2 text-sm text-ink-dim">

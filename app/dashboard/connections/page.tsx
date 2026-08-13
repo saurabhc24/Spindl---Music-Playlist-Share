@@ -68,7 +68,7 @@ export default async function ConnectionsPage(
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="serif text-3xl">Connections</h1>
+        <h1 className="heading text-3xl">Connections</h1>
         <p className="mt-2 text-sm text-ink-dim">
           Link a music service to import your playlists. We only ever read them.
         </p>

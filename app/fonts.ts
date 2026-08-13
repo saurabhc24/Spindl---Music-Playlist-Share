@@ -1,4 +1,4 @@
-import { Instrument_Serif, Manrope } from "next/font/google";
+import { Instrument_Serif, Manrope, Ubuntu } from "next/font/google";
 import localFont from "next/font/local";
 
 /**
@@ -19,6 +19,21 @@ export const instrumentSerif = Instrument_Serif({
 export const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
+  display: "swap",
+});
+
+/**
+ * Headings, via the `.heading` class.
+ *
+ * Weights are listed explicitly because Ubuntu on Google Fonts is not a variable
+ * font -- omitting them fails the build rather than defaulting. Three cuts only:
+ * 500 is what `.heading` sets, and 400 and 700 are there for a heading that
+ * wants to sit back or lean in without pulling a fourth file.
+ */
+export const ubuntu = Ubuntu({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-ubuntu",
   display: "swap",
 });
 
@@ -48,4 +63,4 @@ export const wordmarkFont = localFont({
 });
 
 /** Applied to the wrapper element of any route using the showcase look. */
-export const showcaseFonts = `${instrumentSerif.variable} ${manrope.variable} ${displayFont.variable} ${wordmarkFont.variable}`;
+export const showcaseFonts = `${instrumentSerif.variable} ${manrope.variable} ${ubuntu.variable} ${displayFont.variable} ${wordmarkFont.variable}`;

@@ -45,7 +45,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
           &larr; Back
         </Link>
 
-        <h1 className="serif mt-6 text-3xl">Sign in</h1>
+        <h1 className="heading mt-6 text-3xl">Sign in</h1>
         <p className="mt-2 text-sm text-ink-dim">
           Build your Spindl in under a minute.
         </p>

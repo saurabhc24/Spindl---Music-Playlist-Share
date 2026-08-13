@@ -124,7 +124,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           and the title share about 300px between them and the link ends up
           against the screen edge. */}
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h1 className="serif text-3xl">Admin</h1>
+        <h1 className="heading text-3xl">Admin</h1>
         <Link
           href="/dashboard"
           className="text-xs text-ink-faint transition-colors hover:text-ink sm:text-sm"

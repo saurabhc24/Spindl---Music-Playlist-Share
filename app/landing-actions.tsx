@@ -92,7 +92,7 @@ export function LandingActions({ children }: { children: ReactNode }) {
 
           <div className="mt-4 flex items-start justify-between gap-4">
             <div>
-              <h2 id="signin-card-title" className="serif text-2xl">
+              <h2 id="signin-card-title" className="heading text-2xl">
                 Sign in
               </h2>
               <p className="mt-1 text-sm text-ink-dim">

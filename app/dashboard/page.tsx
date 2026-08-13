@@ -33,7 +33,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           flash in first. */}
       <div className="space-y-10">
         <section className="rise">
-          <h1 className="serif text-3xl">
+          <h1 className="heading text-3xl">
             {/* "Welcome back" is wrong for someone who has never been here. */}
             {isNew ? "Welcome" : "Welcome back"}
             {name ? `, ${name}` : ""}
@@ -60,7 +60,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             className="rise rounded-xl border border-dashed border-[var(--line)] px-6 py-10 text-center"
             style={{ animationDelay: "260ms" }}
           >
-            <h2 className="serif text-xl">Connect a music service</h2>
+            <h2 className="heading text-xl">Connect a music service</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm text-ink-dim">
               Link Spotify or YouTube to import your playlists and start building
               your page.

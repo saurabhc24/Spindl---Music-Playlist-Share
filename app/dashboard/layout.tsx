@@ -23,7 +23,7 @@ export default async function DashboardLayout({
     <div className="flex flex-1 flex-col">
       <header className="border-b border-[var(--line)]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          <Link href="/dashboard" className="serif text-lg">
+          <Link href="/dashboard" className="heading text-lg">
             Spindl
           </Link>
           <div className="flex items-center gap-4">

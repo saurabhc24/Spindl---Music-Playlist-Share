@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-xl space-y-10">
       <header>
-        <h1 className="serif text-3xl">Settings</h1>
+        <h1 className="heading text-3xl">Settings</h1>
         <p className="mt-2 text-sm text-ink-dim">
           How your page introduces you.
         </p>

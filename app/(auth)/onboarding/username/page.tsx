@@ -25,7 +25,7 @@ export default async function ClaimUsernamePage() {
     // the submit button exactly where the keyboard is.
     <div className="flex flex-1 justify-center px-6 py-10 [@media(min-height:640px)]:items-center sm:py-16">
       <div className="w-full max-w-md">
-        <h1 className="serif text-3xl">
+        <h1 className="heading text-3xl">
           Pick your link
         </h1>
         <p className="mt-2 text-sm text-ink-dim">

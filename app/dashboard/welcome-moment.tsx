@@ -96,7 +96,7 @@ export function WelcomeMoment({
         <div>
           <h2
             id="welcome-title"
-            className="serif text-3xl"
+            className="heading text-3xl"
             style={{
               animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 240ms both",
             }}

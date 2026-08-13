@@ -80,6 +80,17 @@ body {
     color: var(--ink);
   }
 
+  /* Headings. Named for the job rather than the face, so swapping the typeface
+     doesn't leave a class called `.serif` rendering a sans -- which is what the
+     previous name would now be doing. */
+  .heading {
+    font-family: var(--font-ubuntu), system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+
+  /* Still loaded and still used, but only by the public profile, which sets it
+     inline rather than through a class. */
   .serif {
     font-family: var(--font-instrument-serif), serif;
     font-weight: 400;

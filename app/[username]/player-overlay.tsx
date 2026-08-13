@@ -228,7 +228,7 @@ export function PlayerOverlay({
                   />
                 ) : (
                   <div
-                    className="serif"
+                    className="heading"
                     style={{
                       position: "absolute",
                       inset: 0,
@@ -335,7 +335,7 @@ export function PlayerOverlay({
               {item.trackCount} TRACKS
             </div>
           )}
-          <div className="serif" style={{ fontSize: 26, lineHeight: 1.05 }}>
+          <div className="heading" style={{ fontSize: 26, lineHeight: 1.05 }}>
             {item?.title}
           </div>
         </div>

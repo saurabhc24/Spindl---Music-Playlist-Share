@@ -177,6 +177,79 @@ body {
     cursor: not-allowed;
   }
 
+  /* The sign-in card. Slides up from the bottom edge on a phone and settles in
+     the middle on a wider screen -- one distance, held in --sheet-from, so the
+     transition and its starting style can't disagree about where it comes from.
+
+     `allow-discrete` on display and overlay is what makes a <dialog> animate at
+     all: without it the element is simply display:none on close and the exit
+     transition never gets a chance to run. @starting-style supplies the "before
+     open" state, which an element being added to the top layer has no other way
+     to describe. */
+  .sheet {
+    --sheet-from: 100%;
+
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    /* auto on three sides, 0 at the bottom: pins the sheet to the bottom edge. */
+    margin: auto auto 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+
+    translate: 0 var(--sheet-from);
+    opacity: 0;
+    transition:
+      translate 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.24s ease,
+      overlay 0.36s allow-discrete,
+      display 0.36s allow-discrete;
+  }
+  .sheet[open] {
+    translate: 0 0;
+    opacity: 1;
+  }
+  @starting-style {
+    .sheet[open] {
+      translate: 0 var(--sheet-from);
+      opacity: 0;
+    }
+  }
+
+  /* The blur behind it. A pseudo element, so it covers the viewport without a
+     second div and without anything to keep in sync with the dialog's state. */
+  .sheet::backdrop {
+    background: rgba(6, 5, 4, 0.5);
+    /* Unprefixed only. Writing the -webkit- alias here as well makes the build
+       dedupe the pair down to just the alias, which Firefox does not support --
+       left alone, it emits both. The rest of this file relies on the same. */
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    transition:
+      opacity 0.3s ease,
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
+  }
+  .sheet[open]::backdrop {
+    opacity: 1;
+  }
+  @starting-style {
+    .sheet[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .sheet {
+      /* Centred rather than pinned, and it only has to travel a little way. */
+      --sheet-from: 1.5rem;
+      max-width: 27rem;
+      margin: auto;
+    }
+  }
+
   .field {
     width: 100%;
     border-radius: 10px;

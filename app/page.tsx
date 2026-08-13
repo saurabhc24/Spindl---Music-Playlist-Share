@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react";
-import Link from "next/link";
+
+import { SignInOptions } from "@/components/sign-in-options";
 
 import { HalftoneField } from "./halftone-field";
+import { LandingActions } from "./landing-actions";
 
 /**
  * Where the deck actually sits inside turntable_image.png, measured from the
@@ -58,12 +60,14 @@ const LIFT = (DECK_TOP - HEADROOM) * ASPECT;
  *     #landing-headline        "Everything you've got spinning"
  *     #landing-subcopy         the line under it
  *     #landing-void            the deliberate gap the design leaves
- *     #landing-actions         the block at the foot
+ *     #landing-actions         the block at the foot (see landing-actions.tsx)
  *       #landing-cta             "Claim your link"
  *       #landing-signin          "Already have an account? Sign In"
  *       #landing-wordmark        "SpindlShare"
  *   #landing-deck          the strip the turntable shows through
  *     #landing-deck-image    the artwork inside it
+ *   #signin-card           the slide-in sign-in dialog, and its blurred backdrop
+ *     #signin-card-panel     the panel inside it
  */
 export default function Home() {
   return (
@@ -109,39 +113,12 @@ export default function Home() {
             foot of the screen rather than stacking them under the copy. */}
         <div id="landing-void" className="flex-1" />
 
-        <div
-          id="landing-actions"
-          className="flex flex-col items-center gap-3.5 pt-8"
-        >
-          <Link
-            id="landing-cta"
-            href="/login"
-            className="btn-gold !px-6 !py-3"
-          >
-            Claim your link
-          </Link>
-
-          <p
-            id="landing-signin"
-            className="flex flex-wrap items-center justify-center gap-1 text-[11px] text-ink-dim"
-          >
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-semibold text-accent underline underline-offset-4"
-            >
-              Sign In
-            </Link>
-          </p>
-
-          {/* The frame sets the wordmark in Maxi, not the headline's Midi. */}
-          <span
-            id="landing-wordmark"
-            className="wordmark mt-3 text-[17px] tracking-wide"
-          >
-            SpindlShare
-          </span>
-        </div>
+        {/* The card's contents are rendered here, on the server, and handed to
+            the client component as children -- so the sign-in actions and the
+            provider configuration never reach the browser. */}
+        <LandingActions>
+          <SignInOptions redirectTo="/dashboard" />
+        </LandingActions>
       </main>
 
       {/* Pinned to the foot rather than placed in the flow: in the flow it was

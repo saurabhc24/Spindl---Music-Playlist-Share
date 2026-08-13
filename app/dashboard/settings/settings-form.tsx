@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from "react";
 
+import { USERNAME_MAX_LENGTH } from "@/lib/username";
+
 import { changeUsername, updateProfile, type ActionState } from "./actions";
 
 function Feedback({ state }: { state: ActionState }) {
@@ -130,7 +132,8 @@ export function UsernameSection({
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}
-          className="w-full bg-transparent py-2.5 pr-4 text-sm outline-none"
+          maxLength={USERNAME_MAX_LENGTH}
+          className="w-full scroll-mt-24 bg-transparent py-2.5 pr-4 text-sm outline-none"
         />
       </div>
 

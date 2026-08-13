@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 
 import { showcaseFonts } from "@/app/fonts";
@@ -13,6 +13,24 @@ export const metadata: Metadata = {
   },
   description:
     "Everything you've got spinning, on one shelf. Share your Spotify and YouTube playlists from a single link.",
+};
+
+/**
+ * `interactive-widget=resizes-content` is the whole reason this export exists.
+ *
+ * By default the on-screen keyboard covers the page without the page knowing:
+ * the layout viewport keeps its full height, so a form centred in it stays
+ * centred behind the keyboard and its submit button can end up unreachable.
+ * This makes the keyboard take the height instead, so dvh units and
+ * height-based media queries see the space that is actually left.
+ *
+ * The other two values are Next's defaults, restated because declaring a
+ * viewport export replaces them wholesale rather than merging.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

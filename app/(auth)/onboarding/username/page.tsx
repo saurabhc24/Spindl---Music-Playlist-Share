@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-import { displayUrl } from "@/lib/app-url";
 import { signOut } from "@/lib/auth";
 import { requireUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
@@ -16,10 +15,15 @@ export default async function ClaimUsernamePage() {
   });
   if (profile) redirect("/dashboard");
 
-  const appUrl = displayUrl();
-
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-16">
+    // Centred while there is room, top-aligned once there isn't. The condition
+    // is on height rather than width because the thing that takes the room away
+    // is the on-screen keyboard: with the viewport meta below set to resize the
+    // layout, opening it shrinks the viewport, this query stops matching, and
+    // the field rises to the top instead of the whole block being pushed under
+    // the keyboard. Centring is what makes a short viewport unusable -- it puts
+    // the submit button exactly where the keyboard is.
+    <div className="flex flex-1 justify-center px-6 py-10 [@media(min-height:640px)]:items-center sm:py-16">
       <div className="w-full max-w-md">
         <h1 className="serif text-3xl">
           Pick your link
@@ -29,7 +33,7 @@ export default async function ClaimUsernamePage() {
           in settings.
         </p>
 
-        <UsernameForm appUrl={appUrl} />
+        <UsernameForm />
 
         {/* Landing here means this account has no profile yet -- which, for
             someone with more than one Google account, usually means they signed

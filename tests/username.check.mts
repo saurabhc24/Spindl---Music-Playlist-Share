@@ -60,8 +60,8 @@ check(
 console.log("\nLength");
 check("rejects 2 characters", rejectsWith("ab", "too_short"));
 check("accepts 3 characters", accepts("abc"));
-check("accepts 20 characters", accepts("a".repeat(20)));
-check("rejects 21 characters", rejectsWith("a".repeat(21), "too_long"));
+check("accepts 32 characters", accepts("a".repeat(32)));
+check("rejects 33 characters", rejectsWith("a".repeat(33), "too_long"));
 
 // --- allowed characters ------------------------------------------------------
 
@@ -77,10 +77,24 @@ check("rejects trailing underscore", rejectsWith("john_", "invalid_characters"))
 check("rejects consecutive periods", rejectsWith("john..doe", "invalid_characters"));
 check("rejects consecutive underscores", rejectsWith("john__doe", "invalid_characters"));
 check("rejects mixed consecutive separators", rejectsWith("john._doe", "invalid_characters"));
-check("rejects hyphens", rejectsWith("john-doe", "invalid_characters"));
+check("accepts hyphens between alphanumerics", accepts("john-doe"));
+check("rejects leading hyphen", rejectsWith("-john", "invalid_characters"));
+check("rejects trailing hyphen", rejectsWith("john-", "invalid_characters"));
+check("rejects consecutive hyphens", rejectsWith("john--doe", "invalid_characters"));
 check("rejects spaces", rejectsWith("john doe", "invalid_characters"));
 check("rejects non-ASCII letters", rejectsWith("jöhn", "invalid_characters"));
 check("rejects emoji", rejectsWith("john😀", "invalid_characters"));
+// The dash lookalikes have no NFKC equivalence to a plain hyphen, so they have
+// to be rejected outright rather than silently folded into one.
+check("rejects en dash", rejectsWith("john–doe", "invalid_characters"));
+check("rejects non-breaking hyphen", rejectsWith("john‑doe", "invalid_characters"));
+// Every remaining symbol on a phone keyboard, none of which is legal.
+for (const symbol of ["!", "@", "#", "$", "%", "&", "*", "+", "=", "/", "\\", "?", "'", '"', "~", "`", "^", "(", ")", "[", "]", "{", "}", "<", ">", ",", ";", ":", "|"]) {
+  check(
+    `rejects ${symbol}`,
+    rejectsWith(`john${symbol}doe`, "invalid_characters")
+  );
+}
 
 // --- reserved and profanity --------------------------------------------------
 

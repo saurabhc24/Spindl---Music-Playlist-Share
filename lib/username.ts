@@ -7,7 +7,7 @@
  */
 
 export const USERNAME_MIN_LENGTH = 3;
-export const USERNAME_MAX_LENGTH = 20;
+export const USERNAME_MAX_LENGTH = 32;
 
 /**
  * Normalizes to the uniqueness key.
@@ -27,11 +27,17 @@ export function normalizeUsername(input: string): string {
 
 /**
  * Anchored so the whole string must match: starts and ends alphanumeric, with
- * single `.` or `_` separators only between alphanumerics. That one pattern
+ * single `.`, `-` or `_` separators only between alphanumerics. That one pattern
  * covers "no leading/trailing separator" and "no consecutive separators"
  * together, rather than three checks that can disagree.
+ *
+ * Everything outside [a-z0-9._-] is rejected by the same anchoring, including
+ * spaces and every other symbol. Note this runs on the *normalized* value, so
+ * NFKC has already folded fullwidth forms -- but it has no equivalence for the
+ * dash lookalikes (en dash, figure dash, non-breaking hyphen), which therefore
+ * fail here rather than quietly becoming a plain hyphen.
  */
-const USERNAME_PATTERN = /^[a-z0-9]+(?:[._][a-z0-9]+)*$/;
+const USERNAME_PATTERN = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/;
 
 /**
  * Names that must never belong to a user: our own routes (a user at /settings
@@ -90,7 +96,7 @@ export const USERNAME_ERROR_MESSAGES: Record<UsernameError, string> = {
   too_short: `Usernames must be at least ${USERNAME_MIN_LENGTH} characters.`,
   too_long: `Usernames must be at most ${USERNAME_MAX_LENGTH} characters.`,
   invalid_characters:
-    "Use letters, numbers, periods and underscores. Periods and underscores can't start, end, or repeat.",
+    "Use letters, numbers, periods, hyphens and underscores. Separators can't start, end, or repeat.",
   reserved: "That username is reserved. Please choose another.",
   profane: "That username isn't available. Please choose another.",
 };
@@ -120,9 +126,9 @@ export function validateUsername(input: unknown): UsernameValidation {
   if (!USERNAME_PATTERN.test(normalized)) return fail("invalid_characters");
   if (RESERVED_USERNAMES.has(normalized)) return fail("reserved");
 
-  // Check with separators stripped too, so "f.u.c.k" can't walk past the
-  // exact-match list.
-  const stripped = normalized.replace(/[._]/g, "");
+  // Check with separators stripped too, so "f.u.c.k" and "f-u-c-k" can't walk
+  // past the exact-match list.
+  const stripped = normalized.replace(/[._-]/g, "");
   if (RESERVED_USERNAMES.has(stripped)) return fail("reserved");
   if (BLOCKED_SUBSTRINGS.some((term) => stripped.includes(term))) {
     return fail("profane");

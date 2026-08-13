@@ -2,7 +2,11 @@
 
 import { useActionState, useEffect, useState } from "react";
 
-import { validateUsername } from "@/lib/username";
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  validateUsername,
+} from "@/lib/username";
 
 import { claimUsername, type ClaimUsernameState } from "./actions";
 
@@ -16,7 +20,7 @@ type RemoteResult = {
   message?: string;
 };
 
-export function UsernameForm({ appUrl }: { appUrl: string }) {
+export function UsernameForm() {
   const [state, action, pending] = useActionState<ClaimUsernameState, FormData>(
     claimUsername,
     undefined
@@ -75,29 +79,33 @@ export function UsernameForm({ appUrl }: { appUrl: string }) {
 
   return (
     <form action={action} className="mt-8 space-y-3">
-      <label htmlFor="username" className="sr-only">
+      <label htmlFor="username" className="mb-1.5 block text-sm font-medium">
         Username
       </label>
-      <div className="flex items-center rounded-lg border border-[var(--line)] bg-[oklch(0.14_0.01_66_/_0.7)] focus-within:border-[var(--accent)]">
-        <span className="select-none py-3 pl-4 text-sm text-ink-faint">
-          {appUrl}/
-        </span>
-        <input
-          id="username"
-          name="username"
-          required
-          autoFocus
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          placeholder="yourname"
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          aria-describedby="username-hint"
-          aria-invalid={isTaken || validation?.ok === false || undefined}
-          className="w-full bg-transparent py-3 pr-4 text-sm outline-none placeholder:text-ink-faint"
-        />
-      </div>
+      <input
+        id="username"
+        name="username"
+        required
+        autoFocus
+        autoComplete="off"
+        autoCapitalize="none"
+        spellCheck={false}
+        // Hard stop at the same limit the server enforces, so the field can't
+        // accept characters that are only going to be rejected on submit.
+        maxLength={USERNAME_MAX_LENGTH}
+        // Not type="url" or inputMode="url": that keyboard leads with "/" and
+        // ".com", neither of which is legal here.
+        inputMode="text"
+        placeholder="yourname"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        aria-describedby="username-hint"
+        aria-invalid={isTaken || validation?.ok === false || undefined}
+        // Room above the field when a browser scrolls it into view for the
+        // on-screen keyboard, so it doesn't end up flush against the top edge
+        // with its label cropped off.
+        className="field scroll-mt-24 !py-3"
+      />
 
       <p
         id="username-hint"
@@ -132,7 +140,7 @@ function describe({
 
   if (!trimmed || !validation) {
     return {
-      text: "3-20 characters. Letters, numbers, periods and underscores.",
+      text: `${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH} characters. Letters, numbers, periods, hyphens and underscores.`,
       className: muted,
     };
   }

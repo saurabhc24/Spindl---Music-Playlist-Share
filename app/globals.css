@@ -31,6 +31,12 @@
   --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.16);
 
+  /* What a foreground surface does to whatever is behind it. Held here rather
+     than at each use so the sign-in card's backdrop and the pages that sit on
+     the same treatment cannot drift to two different blurs. */
+  --veil: rgba(6, 5, 4, 0.5);
+  --veil-blur: 14px;
+
   --danger: oklch(0.7 0.16 25);
   --warn: oklch(0.82 0.11 75);
   --ok: oklch(0.78 0.14 155);
@@ -105,6 +111,15 @@ body {
   .wordmark {
     font-family: var(--font-wordmark), system-ui, sans-serif;
     font-weight: 500;
+  }
+
+  /* The sign-in card's backdrop, as a class, for a page that wants the same
+     treatment without a dialog to hang it off. Pair it with a filled layer
+     behind: backdrop-filter blurs what is already painted underneath, so on its
+     own over nothing it does nothing. */
+  .veil {
+    background: var(--veil);
+    backdrop-filter: blur(var(--veil-blur));
   }
 
   .panel {
@@ -230,11 +245,11 @@ body {
   /* The blur behind it. A pseudo element, so it covers the viewport without a
      second div and without anything to keep in sync with the dialog's state. */
   .sheet::backdrop {
-    background: rgba(6, 5, 4, 0.5);
+    background: var(--veil);
     /* Unprefixed only. Writing the -webkit- alias here as well makes the build
        dedupe the pair down to just the alias, which Firefox does not support --
        left alone, it emits both. The rest of this file relies on the same. */
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(var(--veil-blur));
     opacity: 0;
     transition:
       opacity 0.3s ease,

@@ -447,6 +447,23 @@ body {
   }
 }
 
+/* The caustic field's drift.
+
+   Translation only, and deliberately: the layer this moves contains an SVG
+   filter, and scaling one asks the browser to re-rasterise the filter at the new
+   size rather than just moving the pixels it already has. A pure translate on an
+   oversized layer is the whole reason this can drift without regenerating a
+   full-screen turbulence field every frame. */
+@keyframes shaderDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-4%, 3%, 0);
+  }
+}
+
 @keyframes welcomeIn {
   from {
     opacity: 0;

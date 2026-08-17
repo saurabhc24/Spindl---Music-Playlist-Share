@@ -2,8 +2,6 @@
 
 import { useEffect, useRef } from "react";
 
-import { WelcomeShader } from "./welcome-shader";
-
 /**
  * The first thing a new account sees: a record spinning up, their name, and the
  * link that now belongs to them.
@@ -57,11 +55,7 @@ export function WelcomeMoment({
       // fills the screen.
       onClick={dismiss}
     >
-      <WelcomeShader />
-
-      {/* Above the field. The dialog's own children are not stacked otherwise,
-          and the shader is painted first. */}
-      <div className="relative flex h-full flex-col items-center justify-center gap-6 px-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center gap-6 px-8 text-center">
         <div
           aria-hidden="true"
           className="relative h-24 w-24"

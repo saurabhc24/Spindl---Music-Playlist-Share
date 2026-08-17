@@ -20,7 +20,17 @@ npm run db:seed              # optional: demo profile at /demo
 npm run dev                  # http://127.0.0.1:3000
 ```
 
-> Use `127.0.0.1`, not `localhost` — Spotify rejects `localhost` redirect URIs.
+> Use `127.0.0.1`, not `localhost` — Spotify rejects `localhost` redirect URIs
+> for the **connect** flow, whose URL we build ourselves.
+>
+> Spotify **login** is the exception, and it cannot be made to work locally.
+> Auth.js derives its callback from the request, and `next dev` reports its
+> origin as `http://localhost:PORT` whatever address you browse to — the `Host`
+> and `X-Forwarded-Host` headers are ignored, `-H 127.0.0.1` doesn't change it,
+> and `AUTH_URL` doesn't override it. Spotify's rules say "localhost is not
+> allowed as redirect URI", so there is no value that can be registered to match
+> what gets sent. Sign in with Google or the email link locally; Spotify login
+> works on a deployed URL, where the origin is real.
 
 ### Minimum env to boot
 
@@ -184,10 +194,28 @@ test users.
 
 Push to `main`, import the repo on Vercel, then set every variable from
 `.env.example` in the project settings. Point `DATABASE_URL` at Neon's **pooled**
-connection string and `DIRECT_URL` at the unpooled one. Add the production
-callback URLs to each provider's console alongside the local ones. Set
-`ADMIN_EMAILS` if you want the moderation area, and `CRON_SECRET` for the daily
-cleanup job.
+connection string and `DIRECT_URL` at the unpooled one. Set `ADMIN_EMAILS` if you
+want the moderation area, and `CRON_SECRET` for the daily cleanup job.
+
+Then register the production callback URLs. There are two per provider and only
+the connect ones are environment variables, which is exactly why the login ones
+get missed — a missing entry surfaces as the provider's own
+`redirect_uri: not matching configuration` after the user has already typed
+their password:
+
+| Console | Redirect URI |
+| --- | --- |
+| Google | `https://your-app/api/auth/callback/google` (login) |
+| Google | `https://your-app/api/connect/youtube/callback` (connect) |
+| Spotify | `https://your-app/api/auth/callback/spotify` (login) |
+| Spotify | `https://your-app/api/connect/spotify/callback` (connect) |
+
+The live values are worth reading rather than assuming — `/api/auth/providers`
+is public and reports exactly what Auth.js will send:
+
+```bash
+curl -s https://your-app/api/auth/providers
+```
 
 ### Checking a deploy
 

@@ -36,8 +36,12 @@ export default async function LoginPage(props: PageProps<"/login">) {
   const redirectTo = safeRedirectTo(callbackUrl);
 
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm">
+    // Backdrop from the (auth) layout. Same measure, padding and vertical
+    // behaviour as the username step, so signing out and signing back in are
+    // visibly the same place -- and top-aligned on a short viewport, because the
+    // email field below opens a keyboard.
+    <div className="flex flex-1 justify-center px-7 py-10 [@media(min-height:640px)]:items-center sm:py-16">
+      <div className="w-full max-w-md">
         <Link
           href="/"
           className="text-sm text-ink-faint transition-colors hover:text-ink"
@@ -45,8 +49,10 @@ export default async function LoginPage(props: PageProps<"/login">) {
           &larr; Back
         </Link>
 
-        <h1 className="heading mt-6 text-3xl">Sign in</h1>
-        <p className="mt-2 text-sm text-ink-dim">
+        <h1 className="heading mt-6 text-[34px] font-bold leading-tight">
+          Sign in
+        </h1>
+        <p className="mt-4 text-base leading-relaxed text-ink-dim">
           Build your Spindl in under a minute.
         </p>
 
@@ -56,7 +62,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </p>
         )}
 
-        <div className="mt-8">
+        <div className="mt-10">
           <SignInOptions redirectTo={redirectTo} />
         </div>
       </div>

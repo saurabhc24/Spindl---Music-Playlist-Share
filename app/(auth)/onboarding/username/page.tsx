@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-import { HalftoneField } from "@/app/halftone-field";
 import { signOut } from "@/lib/auth";
 import { requireUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
@@ -17,32 +16,17 @@ export default async function ClaimUsernamePage() {
   if (profile) redirect("/dashboard");
 
   return (
-    // The landing page's backdrop, seen through the same veil the sign-in card
-    // puts over it -- so arriving here reads as the next step of that card
-    // rather than as a different site. `data-shelf-scene` is what the reduced
-    // motion rule keys on, so the ripples and shimmer stop here too.
-    <div
-      data-shelf-scene
-      className="relative flex flex-1 flex-col overflow-hidden"
-    >
-      <HalftoneField />
-      {/* Over the halftone, under the form. backdrop-filter blurs what is
-          already painted beneath it, which is why this sits between the two
-          rather than on the form's own panel. */}
-      <div
-        aria-hidden="true"
-        className="veil pointer-events-none absolute inset-0"
-      />
-
-      {/* Centred while there is room, top-aligned once there isn't. The
-          condition is on height rather than width because the thing that takes
-          the room away is the on-screen keyboard: with the viewport meta set to
-          resize the layout, opening it shrinks the viewport, this query stops
-          matching, and the field rises to the top instead of the whole block
-          being pushed under the keyboard. Centring is what makes a short
-          viewport unusable -- it puts the submit button where the keyboard is. */}
-      <div className="relative z-10 flex flex-1 justify-center px-7 py-10 [@media(min-height:640px)]:items-center sm:py-16">
-        <div className="w-full max-w-md">
+    // The backdrop comes from the (auth) layout, shared with both login screens.
+    //
+    // Centred while there is room, top-aligned once there isn't. The condition
+    // is on height rather than width because the thing that takes the room away
+    // is the on-screen keyboard: with the viewport meta set to resize the
+    // layout, opening it shrinks the viewport, this query stops matching, and
+    // the field rises to the top instead of the whole block being pushed under
+    // the keyboard. Centring is what makes a short viewport unusable -- it puts
+    // the submit button where the keyboard is.
+    <div className="flex flex-1 justify-center px-7 py-10 [@media(min-height:640px)]:items-center sm:py-16">
+      <div className="w-full max-w-md">
           <h1 className="heading text-[34px] font-bold leading-tight">
             Pick your link
           </h1>
@@ -82,7 +66,6 @@ export default async function ClaimUsernamePage() {
             </form>
           </div>
         </div>
-      </div>
     </div>
   );
 }

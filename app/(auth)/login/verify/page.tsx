@@ -2,8 +2,10 @@ import Link from "next/link";
 
 export default function VerifyRequestPage() {
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm text-center">
+    // Backdrop from the (auth) layout. Centred rather than left-aligned like its
+    // siblings: there is nothing to fill in here, just a sentence to read.
+    <div className="flex flex-1 items-center justify-center px-7 py-10 sm:py-16">
+      <div className="w-full max-w-md text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--panel)] ">
           <svg
             aria-hidden="true"
@@ -20,10 +22,10 @@ export default function VerifyRequestPage() {
             />
           </svg>
         </div>
-        <h1 className="heading mt-6 text-3xl">
+        <h1 className="heading mt-6 text-[34px] font-bold leading-tight">
           Check your email
         </h1>
-        <p className="mt-2 text-sm text-ink-dim">
+        <p className="mt-4 text-base leading-relaxed text-ink-dim">
           We sent you a sign-in link. It expires in 24 hours.
         </p>
         <Link

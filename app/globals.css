@@ -422,13 +422,28 @@ body {
   }
 }
 
-/* Starts fast and eases out, like a platter coming up to speed and being let go. */
-@keyframes discSpin {
+/* The platter coming up to speed: a fast turn and a half, easing out. Runs once. */
+@keyframes discSpinUp {
   from {
     rotate: 0deg;
   }
   to {
     rotate: 540deg;
+  }
+}
+
+/* And the turn it keeps once it is up to speed -- linear and endless, because a
+   record that stops dead reads as a picture of a record.
+
+   On its own element rather than alongside the spin-up: both animate `rotate`,
+   and two animations on one element don't add up, the later declaration simply
+   wins. Nested, the two rotations compose. */
+@keyframes discSpin {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
   }
 }
 

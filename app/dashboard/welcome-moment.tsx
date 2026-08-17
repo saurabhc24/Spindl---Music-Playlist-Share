@@ -63,23 +63,36 @@ export function WelcomeMoment({
             animation: "discArrive 700ms cubic-bezier(0.22,1,0.36,1) both",
           }}
         >
+          {/* Two nested rotations that compose: the outer comes up to speed and
+              settles, the inner keeps turning for as long as the card is open.
+              They have to be separate elements -- both animate `rotate`, and on
+              one element the later animation would just replace the earlier. */}
           <div
-            className="absolute inset-0 rounded-full"
+            className="absolute inset-0"
             style={{
-              // The first colour is repeated at the end to close the loop. A
-              // conic gradient wraps back to its start, so ending on a different
-              // value leaves a hard seam running out from the centre.
-              backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.14) 0 1px, transparent 1px 3px),
-                                conic-gradient(from 210deg,
-                                  oklch(0.9 0.07 85),
-                                  oklch(0.72 0.09 70),
-                                  oklch(0.95 0.05 90),
-                                  oklch(0.8 0.09 80),
-                                  oklch(0.9 0.07 85))`,
-              boxShadow: "0 0 44px oklch(0.85 0.09 82 / 0.35)",
-              animation: "discSpin 2.6s cubic-bezier(0.16,0.8,0.3,1) both",
+              animation: "discSpinUp 2.6s cubic-bezier(0.16,0.8,0.3,1) both",
             }}
-          />
+          >
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                // The first colour is repeated at the end to close the loop. A
+                // conic gradient wraps back to its start, so ending on a
+                // different value leaves a hard seam running out from the centre.
+                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.14) 0 1px, transparent 1px 3px),
+                                  conic-gradient(from 210deg,
+                                    oklch(0.9 0.07 85),
+                                    oklch(0.72 0.09 70),
+                                    oklch(0.95 0.05 90),
+                                    oklch(0.8 0.09 80),
+                                    oklch(0.9 0.07 85))`,
+                boxShadow: "0 0 44px oklch(0.85 0.09 82 / 0.35)",
+                // Nine seconds a revolution. A real LP turns in under two, which
+                // at this size reads as spinning rather than as turning.
+                animation: "discSpin 9s linear infinite",
+              }}
+            />
+          </div>
           {/* Label and spindle hole, so the disc reads as a record rather than
               as a loading spinner. Sized off a real 7": the label is about a
               third of the diameter, and much larger starts to read as an eye. */}

@@ -25,7 +25,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 
   return (
     <>
-      {isNew && <WelcomeMoment displayName={name} publicUrl={publicUrl} />}
+      {isNew && <WelcomeMoment displayName={name} handle={profile.username} />}
 
       {/* Each block enters a beat after the one above it. Small enough to read
           as the page settling rather than as an effect, and `both` on the

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 /**
  * The first thing a new account sees: a record spinning up, their name, and the
- * link that now belongs to them.
+ * handle that now belongs to them.
  *
  * It waits. Nothing dismisses it but the person in front of it -- a timer would
  * contradict the words on the screen, and it did: this used to promise "tap to
@@ -23,10 +23,10 @@ import { useEffect, useRef } from "react";
  */
 export function WelcomeMoment({
   displayName,
-  publicUrl,
+  handle,
 }: {
   displayName: string;
-  publicUrl: string;
+  handle: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -55,10 +55,10 @@ export function WelcomeMoment({
       // fills the screen.
       onClick={dismiss}
     >
-      <div className="flex h-full flex-col items-center justify-center gap-6 px-8 text-center">
+      <div className="relative flex h-full flex-col items-center justify-center gap-8 px-8 text-center">
         <div
           aria-hidden="true"
-          className="relative h-24 w-24"
+          className="relative h-[136px] w-[136px]"
           style={{
             animation: "discArrive 700ms cubic-bezier(0.22,1,0.36,1) both",
           }}
@@ -76,61 +76,62 @@ export function WelcomeMoment({
             <div
               className="absolute inset-0 rounded-full"
               style={{
+                // Grooves you can count rather than a texture. At one ring every
+                // three pixels they read as a fine hatch; at eight they read as
+                // a record, which is the point of drawing them at all.
+                //
                 // The first colour is repeated at the end to close the loop. A
                 // conic gradient wraps back to its start, so ending on a
                 // different value leaves a hard seam running out from the centre.
-                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.14) 0 1px, transparent 1px 3px),
+                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.22) 0 1px, transparent 1px 8px),
                                   conic-gradient(from 210deg,
                                     oklch(0.9 0.07 85),
                                     oklch(0.72 0.09 70),
                                     oklch(0.95 0.05 90),
                                     oklch(0.8 0.09 80),
                                     oklch(0.9 0.07 85))`,
-                boxShadow: "0 0 44px oklch(0.85 0.09 82 / 0.35)",
+                boxShadow: "0 0 60px oklch(0.85 0.09 82 / 0.32)",
                 // Nine seconds a revolution. A real LP turns in under two, which
                 // at this size reads as spinning rather than as turning.
                 animation: "discSpin 9s linear infinite",
               }}
             />
           </div>
-          {/* Label and spindle hole, so the disc reads as a record rather than
-              as a loading spinner. Sized off a real 7": the label is about a
-              third of the diameter, and much larger starts to read as an eye. */}
+          {/* One dark centre rather than a label with a spindle hole punched in
+              it. At this size the hole was a speck, and two rings inside each
+              other read as a target -- a single well is cleaner and is what the
+              design asks for. */}
           <div
-            className="absolute inset-[33%] rounded-full"
-            style={{ background: "oklch(0.19 0.015 66)" }}
-          />
-          <div
-            className="absolute inset-[47.5%] rounded-full"
-            style={{ background: "#060504" }}
+            className="absolute inset-[35%] rounded-full"
+            style={{
+              background: "oklch(0.17 0.015 66)",
+              boxShadow: "inset 0 0 0 1px oklch(0.55 0.05 78 / 0.35)",
+            }}
           />
         </div>
 
         <div>
           <h2
             id="welcome-title"
-            className="heading text-3xl"
+            className="heading text-[34px] font-bold leading-tight"
             style={{
               animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 240ms both",
             }}
           >
-            Welcome, {displayName}
+            {/* Two lines by construction, not by wrapping: a short name would
+                otherwise sit on one line and lose the shape entirely. */}
+            Welcome
+            <br />
+            {displayName}
           </h2>
           <p
-            className="mt-3 text-sm text-ink-dim"
+            className="mt-6 text-base text-ink"
             style={{
-              animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 400ms both",
+              animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 420ms both",
             }}
           >
-            Your shelf is live at
-          </p>
-          <p
-            className="mt-1 text-sm font-medium text-accent"
-            style={{
-              animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 520ms both",
-            }}
-          >
-            {publicUrl}
+            Your shelf is live:{" "}
+            <span className="text-accent">@{handle}</span>
           </p>
         </div>
 
@@ -139,13 +140,24 @@ export function WelcomeMoment({
         <button
           type="button"
           onClick={dismiss}
-          className="btn-ghost !px-5 !py-2 !text-xs"
+          className="btn-ghost !px-8 !py-3 !text-sm"
           style={{
-            animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 900ms both",
+            animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 700ms both",
           }}
         >
           Tap to continue
         </button>
+
+        {/* Sits at the foot rather than in the centred stack, so it reads as the
+            product signing the moment rather than as another line of the card. */}
+        <span
+          className="wordmark absolute bottom-20 text-[20px] tracking-wide"
+          style={{
+            animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 900ms both",
+          }}
+        >
+          SpindlShare
+        </span>
       </div>
     </dialog>
   );

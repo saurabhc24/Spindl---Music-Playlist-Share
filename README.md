@@ -53,32 +53,40 @@ obtain each value.
 | `npm run db:seed` | Seed a demo profile |
 | `npm run db:studio` | Prisma Studio |
 
-`npm run check` runs seven suites: `crypto`, `sync`, `youtube`, `hardening`,
-`username`, `rename` and `admin`. Each is also runnable on its own
+`npm run check` runs eight suites: `crypto`, `sync`, `youtube`, `hardening`,
+`username`, `rename`, `admin` and `link`. Each is also runnable on its own
 (`npm run check:sync`). They're plain `tsx` scripts with a `check()` helper rather
 than a test framework — enough to assert the invariants that matter without
 another dependency in the tree.
 
-`crypto`, `youtube` and `hardening` run anywhere. `sync`, `username`, `rename`
-and `admin` need a live database; they create rows under a timestamped prefix and
-clean up after themselves.
+`crypto`, `youtube`, `hardening` and `link` run anywhere. `sync`, `username`,
+`rename` and `admin` need a live database; they create rows under a timestamped
+prefix and clean up after themselves.
 
 ## How it's put together
 
 ```
-app/[username]/       public profile page + OG image
-app/(auth)/           login, magic-link verify, username onboarding
-app/dashboard/        connections, playlist curation, settings
-app/admin/            moderation and site overview
-app/api/connect/      OAuth start + callback (per provider)
-app/api/sync/         pull playlists from a connected provider
-app/api/health/       deployment diagnostics
-lib/providers/        one module per music service
-lib/sync.ts           reconciles fetched playlists into the DB
-lib/crypto.ts         AES-256-GCM for stored OAuth tokens
-lib/rate-limit.ts     per-account + per-IP fixed windows
-lib/dal.ts            the authoritative session and profile checks
-proxy.ts              optimistic auth gate (Next 16's renamed middleware)
+app/page.tsx                      landing page
+app/halftone-field.tsx            its animated backdrop, shared with the auth screens
+app/landing-actions.tsx           the sign-in card, and the links that open it
+app/[username]/                   public profile page + OG image
+app/(auth)/layout.tsx             one backdrop for all three auth screens
+app/(auth)/                       login, magic-link verify, username onboarding
+app/dashboard/                    connections, playlist curation, settings
+app/dashboard/welcome-moment.tsx  the greeting a new account gets, once
+app/admin/                        moderation and site overview
+app/api/connect/                  OAuth start + callback (per provider)
+app/api/sync/                     pull playlists from a connected provider
+app/api/visit/                    the visit counter's write end
+app/api/health/                   deployment diagnostics
+components/sign-in-options.tsx    the providers, shared by the card and /login
+lib/providers/                    one module per music service
+lib/sync.ts                       reconciles fetched playlists into the DB
+lib/crypto.ts                     AES-256-GCM for stored OAuth tokens
+lib/rate-limit.ts                 per-account + per-IP fixed windows
+lib/admin-metrics.ts              the admin page's counts and signup trends
+lib/dal.ts                        the authoritative session and profile checks
+proxy.ts                          optimistic auth gate (Next 16's renamed middleware)
 ```
 
 ### Notable decisions
@@ -100,6 +108,17 @@ proxy.ts              optimistic auth gate (Next 16's renamed middleware)
 - **`proxy.ts` only checks for a cookie.** It runs on every dashboard request, so
   it stays a cheap optimistic gate; the authoritative check lives in `lib/dal.ts`,
   next to the data it protects.
+- **Signing in opens a card, but `/login` is still a real page.** The landing
+  page's links intercept their own click and open a `<dialog>`; if that fails,
+  or JavaScript never arrives, the click is never intercepted and the browser
+  follows the href. `/login` is not merely that fallback — the proxy sends every
+  unauthenticated dashboard request there with a `callbackUrl`, and Auth.js
+  reports its own errors there, which a card that never receives an `?error=`
+  cannot show. The methods themselves live in one component used by both, so a
+  provider cannot be added to one and missed on the other.
+- **Deleting an account is a flag, not a cascade** — see Moderation below.
+- **Visits are counted by a beacon, not during render** — see Counting visits
+  below.
 
 ### Usernames
 
@@ -109,6 +128,13 @@ only lookup path. NFKC matters for more than tidiness — without it, fullwidth
 `ｄｅｍｏ` would register as a distinct row from `demo` and read identically on
 screen. Postgres `citext` would also work, but Prisma can only model it as
 `Unsupported()`, which is unusable in typed `where` clauses.
+
+Three to 32 characters: letters, numbers, and `.` `-` `_` as separators between
+them. One anchored pattern carries the whole rule, so "no leading or trailing
+separator" and "no two in a row" cannot disagree with each other, and anything
+outside that set — spaces, symbols, emoji — falls out of the same anchoring. The
+dash lookalikes are worth a mention: an en dash has no NFKC equivalence to a
+plain hyphen, so it is rejected rather than quietly folded into one.
 
 Claiming a name does **no** availability pre-check before inserting. Any
 SELECT-then-INSERT is a TOCTOU race, so the unique index arbitrates and the
@@ -131,6 +157,17 @@ a separate ISR cache entry.
 `/admin` lists every profile with its playlist and connection counts, plus
 site-wide totals, and can suspend, restore or delete an account.
 
+The numbers at the head of the page are visits, signups, active, suspended and
+deleted, then signups week-on-week and month-on-month. A trend is shown as a
+pair of counts rather than one number, because eleven signups this week is good
+or bad entirely depending on last week; where the previous period was zero the
+percentage is withheld rather than rendered as +100% or +∞, both of which would
+be inventions. All four windows come from one query off the database's clock —
+four separate queries could each land on a different second and fail to add up,
+and reading `Date.now()` during render is impure either way. "Active" is counted
+directly rather than as total minus suspended minus deleted, since an account can
+be both and that arithmetic would subtract it twice.
+
 Who counts as an admin comes from the `ADMIN_EMAILS` environment variable
 (comma-separated, matched case-insensitively against the whole address), not a
 column on `User`. Admin status therefore sits outside the data the application
@@ -147,8 +184,27 @@ own `isPublic` toggle — otherwise a suspended user could simply un-hide
 themselves from Settings. A suspended page returns an ordinary 404 rather than
 announcing that it was suspended, and the reason is shown only in the admin list.
 Admins can't suspend or delete their own account (a misclick would hide the page
-they need in order to undo it), and deletion requires typing the username, since
-it cascades to playlists, connections and sessions.
+they need in order to undo it), and deletion requires typing the username.
+
+Deletion is **reversible**. It used to be `user.delete` and a cascade, which made
+"how many accounts were deleted" unanswerable — the rows that would have carried
+the answer were the ones being removed. It now sets `deletedAt` and the row
+survives, so the deletion can be counted and undone. What actually goes is the
+ability to use the account: sessions are dropped so an open tab is signed out at
+once, the public page 404s, and a `signIn` callback refuses a fresh sign-in.
+
+Two consequences of that design are deliberate. The email address moves to
+`deletedEmail`, because `email` carries a unique index and leaving it in place
+would permanently bar that person from ever signing up again — which would make
+the *reversible* delete more destructive than the hard one it replaced. And the
+OAuth `Account` rows are kept, so the same Google or Spotify identity is refused
+rather than allowed to register again immediately; for a moderation delete that
+is the point.
+
+Because the row survives, every path that could resurface it has to exclude it:
+the public profile lookup, the rename redirect, the OG image, sign-in, and the
+cleanup cron — which would otherwise hard-delete a flagged account with no
+username after 30 days and walk the count backwards.
 
 ### Handling traffic and abuse
 
@@ -179,6 +235,30 @@ username. It deliberately does **not** delete established accounts for
 inactivity — that destroys real data and breaks live shared links, so it should
 be a product decision with warning emails, not a silent cron job. Pass
 `?dryRun=1` to see what it would remove.
+
+### Counting visits
+
+The counter is a first-party one in Postgres — `DailyVisit`, one row per day
+keyed by the date, so recording a visit is a single atomic upsert with no lookup
+and no way to race two rows into existence for the same day.
+
+It is written by a beacon from the browser rather than during render, and that is
+forced by the caching. The highest-traffic route is the public profile, which is
+ISR-cached precisely so repeat views never reach the database; counting at render
+time would either miss every cached view or force the page dynamic and throw away
+the cache that makes it cheap. The trade is that only visitors running JavaScript
+are counted — roughly the same population Vercel Analytics reports, and it
+excludes most crawlers, which here is a feature.
+
+The beacon fires once per browser session, so the number is *visits* rather than
+page views. Vercel's own analytics stays for its bot filtering and dashboard;
+this exists so the admin page doesn't depend on a third party being up or on a
+plan tier.
+
+Storage is not a concern worth optimising: a row is about 56 bytes including its
+index entry, so a year of daily rows is ~20 kB. Rolling months up into single
+records would save that much per year and cost the day-level resolution
+permanently.
 
 ### On "YouTube" vs "YouTube Music"
 
@@ -236,4 +316,8 @@ region, and which rate-limit backend is live.
 - **Avatar upload.** Avatars are taken from the login provider;
   `BLOB_READ_WRITE_TOKEN` is reserved for uploading your own.
 - **Themes.** `Profile.theme` exists in the schema with no UI behind it.
-- **Self-serve account deletion.** Only an admin can delete an account today.
+- **Self-serve account deletion.** Only an admin can delete an account today —
+  though the mechanism is now reversible, so the hard part is the product
+  decision rather than the schema.
+- **A dashboard view of the visit counter.** `DailyVisit` holds a daily series
+  and `/admin` only shows the total.

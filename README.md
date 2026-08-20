@@ -74,6 +74,7 @@ app/(auth)/layout.tsx             one backdrop for all three auth screens
 app/(auth)/                       login, magic-link verify, username onboarding
 app/dashboard/                    connections, playlist curation, settings
 app/dashboard/welcome-moment.tsx  the greeting a new account gets, once
+app/(legal)/                      privacy policy and terms
 app/admin/                        moderation and site overview
 app/api/connect/                  OAuth start + callback (per provider)
 app/api/sync/                     pull playlists from a connected provider
@@ -266,9 +267,22 @@ There is no official YouTube Music API. Spindl reads your playlists through the
 YouTube Data API v3, which is where YouTube Music playlists live underneath — so
 the UI says "YouTube playlists" rather than claiming YouTube Music support.
 
-Note that `youtube.readonly` is a *sensitive* scope: until Google verifies the
-app, the consent screen shows an "unverified app" warning and is capped at 100
-test users.
+Note that `youtube.readonly` is a *sensitive* scope, which has two consequences.
+
+Until Google verifies the app, the consent screen shows an "unverified app"
+warning and the app is capped at 100 users. Sensitive is not *restricted*, so
+verification needs no third-party security assessment -- it needs a public
+homepage, a privacy policy disclosing what is done with Google user data, domain
+ownership proved in Search Console, a scope justification and a demo video. The
+policy and terms live at `/privacy` and `/terms`; both names are already in the
+reserved-username list, so no profile can shadow them.
+
+The sharper consequence is that while the OAuth consent screen is in **Testing**,
+Google issues refresh tokens that expire after **7 days** -- with an exception
+only for `email`/`profile`/`openid`. Sign-in is therefore fine, but every YouTube
+connection dies weekly and `lib/sync.ts` reports it as a revoked grant. Publishing
+to Production fixes that on its own, before verification; the warning and the user
+cap simply remain until the review passes.
 
 ## Deploying
 

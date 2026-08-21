@@ -57,7 +57,8 @@ const RESERVED_USERNAMES = new Set([
   "favicon", "robots", "sitemap", "manifest", "_next", "well-known",
   "www", "mail", "email", "smtp", "ftp", "ns", "dns", "test", "dev", "staging",
   // Brand terms, so nobody can pose as the product.
-  "spindl", "spindle", "spindlapp", "official", "team", "staff", "moderator",
+  "spindl", "spindle", "spindlapp", "spindlshare", "official", "team", "staff",
+  "moderator",
   "mod", "system", "root", "security", "verified", "shelf",
   // Integration names, which would imply an official account.
   "spotify", "youtube", "applemusic", "apple", "soundcloud", "tidal", "deezer",

@@ -24,7 +24,7 @@ export default async function DashboardLayout({
       <header className="border-b border-[var(--line)]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <Link href="/dashboard" className="heading text-lg">
-            Spindl
+            SpindlShare
           </Link>
           <div className="flex items-center gap-4">
             <Link

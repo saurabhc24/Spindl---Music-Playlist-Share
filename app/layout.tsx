@@ -8,8 +8,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Spindl",
-    template: "%s | Spindl",
+    default: "SpindlShare",
+    template: "%s | SpindlShare",
   },
   description:
     "Everything you've got spinning, on one shelf. Share your Spotify and YouTube playlists from a single link.",

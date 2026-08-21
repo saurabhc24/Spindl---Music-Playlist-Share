@@ -52,7 +52,7 @@ function buildProviders(): NextAuthConfig["providers"] {
         // Deliberately no `prompt: "select_account"`. Forcing the chooser on
         // every sign-in means a returning user has to re-pick their account each
         // time, and picking the wrong one silently lands them in a *different*
-        // Spindl account -- which reads as the app having forgotten them. Left
+        // SpindlShare account -- which reads as the app having forgotten them. Left
         // unset, Google reuses the active session when there's one and still
         // shows the chooser by itself when several are signed in.
         authorization: {

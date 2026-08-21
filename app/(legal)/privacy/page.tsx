@@ -5,7 +5,7 @@ import { CONTACT_EMAIL, POLICY_UPDATED } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Privacy",
   description:
-    "What Spindl collects, why, and what it does with data from Google and Spotify.",
+    "What SpindlShare collects, why, and what it does with data from Google and Spotify.",
 };
 
 /**
@@ -21,13 +21,13 @@ export default function PrivacyPage() {
       <p>Last updated {POLICY_UPDATED}.</p>
 
       <p>
-        Spindl turns the playlists you already have into one shareable page. It
+        SpindlShare turns the playlists you already have into one shareable page. It
         needs very little to do that, and this page says exactly what.
       </p>
 
-      <h2>What Spindl stores about you</h2>
+      <h2>What SpindlShare stores about you</h2>
       <p>
-        When you sign in, Spindl stores the name, email address and profile
+        When you sign in, SpindlShare stores the name, email address and profile
         picture your sign-in provider gives it, plus the username you choose and
         anything you type into your profile — a display name and a short bio.
         That is the whole account.
@@ -37,10 +37,10 @@ export default function PrivacyPage() {
       <p>
         Connecting YouTube asks for one scope,{" "}
         <code>https://www.googleapis.com/auth/youtube.readonly</code>. It is
-        read-only: Spindl cannot create, change or delete anything in your
+        read-only: SpindlShare cannot create, change or delete anything in your
         YouTube account, and never asks for permission to.
       </p>
-      <p>From your playlists, Spindl reads and stores only:</p>
+      <p>From your playlists, SpindlShare reads and stores only:</p>
       <ul>
         <li>the playlist&apos;s title and description</li>
         <li>its cover image URL</li>
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         <strong>profile</strong>, which is your name, email address and picture.
       </p>
       <p>
-        Spindl&apos;s use of information received from Google APIs adheres to the{" "}
+        SpindlShare&apos;s use of information received from Google APIs adheres to the{" "}
         <a
           href="https://developers.google.com/terms/api-services-user-data-policy"
           target="_blank"
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
           Google API Services User Data Policy
         </a>
         , including the Limited Use requirements. That data is used only to show
-        your playlists on your own Spindl page. It is never sold, never used for
+        your playlists on your own SpindlShare page. It is never sold, never used for
         advertising, never used to train any model, and never shared with anyone
         else — except where you have published it yourself, which is the point
         of the page.
@@ -79,7 +79,7 @@ export default function PrivacyPage() {
 
       <h2>Access tokens</h2>
       <p>
-        Connecting a service gives Spindl a token so it can re-read your
+        Connecting a service gives SpindlShare a token so it can re-read your
         playlists later. Those tokens are encrypted before they are written to
         the database, with AES-256-GCM, and are used for nothing but fetching
         your playlists.
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
 
       <h2>Visits</h2>
       <p>
-        Spindl counts how many visits it gets each day, as a single number per
+        SpindlShare counts how many visits it gets each day, as a single number per
         day. It is not tied to accounts, does not identify anyone, and cannot be
         traced back to a visitor or a page.
       </p>
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
           disconnecting anything.
         </li>
         <li>
-          <strong>Revoke Spindl&apos;s access from the provider&apos;s side</strong>{" "}
+          <strong>Revoke SpindlShare&apos;s access from the provider&apos;s side</strong>{" "}
           at{" "}
           <a
             href="https://myaccount.google.com/permissions"
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
           >
             Spotify apps
           </a>
-          . Spindl stops being able to read anything the moment you do.
+          . SpindlShare stops being able to read anything the moment you do.
         </li>
         <li>
           <strong>Delete your account entirely</strong> by emailing{" "}
@@ -134,14 +134,14 @@ export default function PrivacyPage() {
 
       <h2>Where it is kept</h2>
       <p>
-        Spindl runs on Vercel and stores its data in a Postgres database hosted
+        SpindlShare runs on Vercel and stores its data in a Postgres database hosted
         by Neon. Sign-in is handled by Google, Spotify or an emailed link,
         depending on which you use. Nobody else receives your data.
       </p>
 
       <h2>Changes</h2>
       <p>
-        If this policy changes in a way that affects what Spindl does with your
+        If this policy changes in a way that affects what SpindlShare does with your
         data, the date at the top changes with it.
       </p>
 

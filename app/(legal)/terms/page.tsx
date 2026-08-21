@@ -4,7 +4,7 @@ import { CONTACT_EMAIL, POLICY_UPDATED } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: "The terms you agree to by using Spindl.",
+  description: "The terms you agree to by using SpindlShare.",
 };
 
 export default function TermsPage() {
@@ -14,7 +14,7 @@ export default function TermsPage() {
       <p>Last updated {POLICY_UPDATED}.</p>
 
       <p>
-        Spindl gives you one page that shows the playlists you already have,
+        SpindlShare gives you one page that shows the playlists you already have,
         wherever they live. Using it means agreeing to what follows.
       </p>
 
@@ -23,16 +23,16 @@ export default function TermsPage() {
         You need an account to make a page, and you are responsible for what
         happens under it. Pick a username you are entitled to use — names that
         impersonate somebody else, or that are chosen to be mistaken for a brand
-        or for Spindl itself, can be taken back.
+        or for SpindlShare itself, can be taken back.
       </p>
 
       <h2>Your playlists stay yours</h2>
       <p>
-        Spindl does not own, host or copy your music. It reads the title, cover
+        SpindlShare does not own, host or copy your music. It reads the title, cover
         and link of a playlist from Spotify or YouTube and shows them, and every
         play happens on the service the playlist actually lives on, under that
         service&apos;s own terms. The words you write — your display name, your
-        bio — stay yours; publishing a page just means you are asking Spindl to
+        bio — stay yours; publishing a page just means you are asking SpindlShare to
         show them.
       </p>
 
@@ -56,16 +56,16 @@ export default function TermsPage() {
 
       <h2>Availability</h2>
       <p>
-        Spindl is provided as it is, with no guarantee that it will be available,
+        SpindlShare is provided as it is, with no guarantee that it will be available,
         uninterrupted or free of faults. It depends on Spotify, YouTube and
         Google, any of which can change or withdraw access at any time, which
-        would change what Spindl can do. Keep your own copy of anything you would
+        would change what SpindlShare can do. Keep your own copy of anything you would
         be sorry to lose.
       </p>
 
       <h2>Ending it</h2>
       <p>
-        You can stop using Spindl whenever you like — disconnect your services
+        You can stop using SpindlShare whenever you like — disconnect your services
         from the Connections page, or email{" "}
         <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> to have the
         account removed.

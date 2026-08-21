@@ -1,8 +1,8 @@
-# Spindl
+# SpindlShare
 
 **Everything you've got spinning.** A shareable shelf for your music playlists —
 connect Spotify and YouTube, pick what you want to show, and share it all from
-one link (`spindl.app/yourname`).
+one link (`spindlshare.vercel.app/yourname`).
 
 Built with Next.js 16 (App Router) + TypeScript, Prisma 7 + Postgres, and
 Auth.js v5. Deploys to Vercel.
@@ -263,7 +263,7 @@ permanently.
 
 ### On "YouTube" vs "YouTube Music"
 
-There is no official YouTube Music API. Spindl reads your playlists through the
+There is no official YouTube Music API. SpindlShare reads your playlists through the
 YouTube Data API v3, which is where YouTube Music playlists live underneath — so
 the UI says "YouTube playlists" rather than claiming YouTube Music support.
 
@@ -274,8 +274,21 @@ warning and the app is capped at 100 users. Sensitive is not *restricted*, so
 verification needs no third-party security assessment -- it needs a public
 homepage, a privacy policy disclosing what is done with Google user data, domain
 ownership proved in Search Console, a scope justification and a demo video. The
-policy and terms live at `/privacy` and `/terms`; both names are already in the
-reserved-username list, so no profile can shadow them.
+policy and terms live at `/privacy` and `/terms`, are linked from the foot of the
+landing page because the review expects to find them there and not only on the
+consent screen, and both names are in the reserved-username list so no profile
+can shadow them.
+
+**Verification cannot pass on a `*.vercel.app` URL.** Google requires the home
+page's domain to be verified as a *Domain property* in Search Console — its own
+wording is "you must verify the Domain Property (DNS-level), rather than a 'URL
+prefix' or 'Site,' property" — which means a DNS TXT record on the root domain.
+`vercel.app` is Vercel's zone, so there is no record to add and no ownership to
+prove; an HTML-file URL-prefix verification is accepted by Search Console and
+then rejected by the OAuth review with "the website of your home page URL is not
+registered to you". A custom domain is the only way past it. Until then the
+workable state is Production-but-unverified: the warning and the 100-user cap
+stay, the 7-day token expiry does not.
 
 The sharper consequence is that while the OAuth consent screen is in **Testing**,
 Google issues refresh tokens that expire after **7 days** -- with an exception

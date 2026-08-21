@@ -5,7 +5,7 @@
  * behalf of arbitrary users: Spotify caps a development-mode app at five
  * hand-added accounts, and Google requires verification before a sensitive
  * scope reaches the public. A pasted link needs no account of any kind, so it
- * is the only path to a playlist that works for every user of Spindl.
+ * is the only path to a playlist that works for every user of SpindlShare.
  *
  * Parsing is deliberately free of server-only imports, so the same rules give
  * instant feedback in the browser and remain the source of truth on the server.
@@ -194,7 +194,7 @@ const RESOLVE_TIMEOUT_MS = 8000;
  * oEmbed is the whole point of this feature: it needs no client id, no token, no
  * user consent and has no per-user quota -- it is the same public endpoint that
  * makes these links unfurl in chat apps. It only describes *public* playlists,
- * which is the correct boundary anyway: a Spindl page is public, so a playlist
+ * which is the correct boundary anyway: a SpindlShare page is public, so a playlist
  * that can't be seen without logging in has no business being listed on one.
  */
 export async function resolvePlaylistLink(

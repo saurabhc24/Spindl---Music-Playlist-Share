@@ -103,10 +103,10 @@ export default function Home() {
         </h1>
         <p
           id="landing-subcopy"
-          className="mt-6 max-w-[17rem] text-[15px] leading-relaxed text-ink"
+          className="mt-6 max-w-[19rem] text-[15px] leading-relaxed text-ink"
         >
-          Your playlist taste, curated into one shareable shelf — built for
-          socials
+          One page for the playlists you already made on Spotify and YouTube.
+          Pick which ones to show, and share them all from a single link.
         </p>
 
         {/* The frame leaves a deliberate void here, pushing the actions to the

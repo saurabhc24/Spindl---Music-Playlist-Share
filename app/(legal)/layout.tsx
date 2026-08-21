@@ -21,7 +21,7 @@ export default function LegalLayout({
         href="/"
         className="text-sm text-ink-faint transition-colors hover:text-ink"
       >
-        &larr; Spindl
+        &larr; SpindlShare
       </Link>
 
       <article

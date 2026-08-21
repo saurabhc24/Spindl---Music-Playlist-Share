@@ -84,7 +84,7 @@ export default async function PublicProfilePage(
   const { profile, playlists } = data;
   const displayName = profile.displayName || profile.username;
 
-  // Spindl has no notion of a named shelf, so the closest honest grouping is the
+  // SpindlShare has no notion of a named shelf, so the closest honest grouping is the
   // service a playlist came from -- a real label, from data the user already
   // has, rather than an invented one. Within a shelf the user's own ordering is
   // preserved; a provider with more than MAX_PER_SHELF spills onto further
@@ -250,7 +250,7 @@ export default async function PublicProfilePage(
             color: "oklch(0.5 0.015 78)",
           }}
         >
-          Make your own Spindl
+          Make your own SpindlShare
         </Link>
       </div>
     </div>

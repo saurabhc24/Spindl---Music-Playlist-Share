@@ -64,6 +64,26 @@ export function LandingActions({ children }: { children: ReactNode }) {
         >
           SpindlShare
         </span>
+
+        {/* Google's OAuth review expects the privacy policy and terms to be
+            reachable from the home page, not only from the consent screen.
+            Deliberately quiet: they are a requirement and a courtesy, not part
+            of the pitch. */}
+        <p
+          id="landing-legal"
+          className="flex items-center gap-2 text-[11px] text-ink-faint"
+        >
+          <Link
+            href="/privacy"
+            className="transition-colors hover:text-ink-dim"
+          >
+            Privacy Policy
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms" className="transition-colors hover:text-ink-dim">
+            Terms of Service
+          </Link>
+        </p>
       </div>
 
       <dialog
@@ -88,7 +108,7 @@ export function LandingActions({ children }: { children: ReactNode }) {
                 Sign in
               </h2>
               <p className="mt-1 text-sm text-ink-dim">
-                Build your Spindl in under a minute.
+                Build your SpindlShare in under a minute.
               </p>
             </div>
             <button

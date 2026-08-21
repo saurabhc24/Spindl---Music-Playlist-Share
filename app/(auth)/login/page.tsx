@@ -53,7 +53,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
           Sign in
         </h1>
         <p className="mt-4 text-base leading-relaxed text-ink-dim">
-          Build your Spindl in under a minute.
+          Build your SpindlShare in under a minute.
         </p>
 
         {errorMessage && (

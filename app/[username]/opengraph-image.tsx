@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 import { getPublicProfile } from "@/lib/profile";
 
-export const alt = "Playlists shared on Spindl";
+export const alt = "Playlists shared on SpindlShare";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -93,7 +93,7 @@ export default async function OpengraphImage({
             ))}
           </div>
           <div style={{ display: "flex", fontSize: 24, color: "#71717a" }}>
-            Spindl
+            SpindlShare
           </div>
         </div>
       </div>

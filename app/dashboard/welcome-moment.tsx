@@ -55,7 +55,7 @@ export function WelcomeMoment({
       // fills the screen.
       onClick={dismiss}
     >
-      <div className="relative flex h-full flex-col items-center justify-center gap-8 px-8 text-center">
+      <div className="relative flex h-full flex-col items-center justify-center px-8 pb-[16.5vh] text-center">
         <div
           aria-hidden="true"
           className="relative h-[136px] w-[136px]"
@@ -76,21 +76,26 @@ export function WelcomeMoment({
             <div
               className="absolute inset-0 rounded-full"
               style={{
-                // Grooves you can count rather than a texture. At one ring every
-                // three pixels they read as a fine hatch; at eight they read as
-                // a record, which is the point of drawing them at all.
+                // Grooves you can count rather than a texture, at one ring
+                // every six pixels -- about nine of them between the centre and
+                // the edge, which is what the reference shows. Much tighter and
+                // they collapse into a hatch.
                 //
                 // The first colour is repeated at the end to close the loop. A
                 // conic gradient wraps back to its start, so ending on a
                 // different value leaves a hard seam running out from the centre.
-                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.22) 0 1px, transparent 1px 8px),
+                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.18) 0 1px, transparent 1px 6px),
                                   conic-gradient(from 210deg,
-                                    oklch(0.9 0.07 85),
-                                    oklch(0.72 0.09 70),
-                                    oklch(0.95 0.05 90),
-                                    oklch(0.8 0.09 80),
-                                    oklch(0.9 0.07 85))`,
-                boxShadow: "0 0 60px oklch(0.85 0.09 82 / 0.32)",
+                                    oklch(0.91 0.06 86),
+                                    oklch(0.85 0.07 80),
+                                    oklch(0.93 0.05 88),
+                                    oklch(0.87 0.07 82),
+                                    oklch(0.91 0.06 86))`,
+                // Two shadows: a tight one that reads as the disc catching the
+                // light, and a broad one for the halo the reference throws well
+                // past the record's own edge.
+                boxShadow:
+                  "0 0 34px oklch(0.88 0.09 84 / 0.30), 0 0 110px oklch(0.82 0.10 80 / 0.26)",
                 // Nine seconds a revolution. A real LP turns in under two, which
                 // at this size reads as spinning rather than as turning.
                 animation: "discSpin 9s linear infinite",
@@ -102,15 +107,12 @@ export function WelcomeMoment({
               other read as a target -- a single well is cleaner and is what the
               design asks for. */}
           <div
-            className="absolute inset-[35%] rounded-full"
-            style={{
-              background: "oklch(0.17 0.015 66)",
-              boxShadow: "inset 0 0 0 1px oklch(0.55 0.05 78 / 0.35)",
-            }}
+            className="absolute inset-[34.5%] rounded-full"
+            style={{ background: "#000" }}
           />
         </div>
 
-        <div>
+        <div className="mt-[88px]">
           <h2
             id="welcome-title"
             className="heading text-[34px] font-bold leading-tight"
@@ -125,7 +127,7 @@ export function WelcomeMoment({
             {displayName}
           </h2>
           <p
-            className="mt-6 text-base text-ink"
+            className="mt-8 text-base text-ink"
             style={{
               animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 420ms both",
             }}
@@ -140,7 +142,7 @@ export function WelcomeMoment({
         <button
           type="button"
           onClick={dismiss}
-          className="btn-ghost !px-8 !py-3 !text-sm"
+          className="btn-ghost mt-[34px] !px-8 !py-3 !text-sm"
           style={{
             animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 700ms both",
           }}
@@ -151,7 +153,7 @@ export function WelcomeMoment({
         {/* Sits at the foot rather than in the centred stack, so it reads as the
             product signing the moment rather than as another line of the card. */}
         <span
-          className="wordmark absolute bottom-20 text-[20px] tracking-wide"
+          className="wordmark absolute bottom-[50px] text-[20px] tracking-wide"
           style={{
             animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 900ms both",
           }}

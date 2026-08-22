@@ -23,16 +23,36 @@ export default async function DashboardLayout({
     <div className="flex flex-1 flex-col">
       <header className="border-b border-[var(--line)]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          <Link href="/dashboard" className="heading text-lg">
-            SpindlShare
+          {/* Identity on the left, the way the design has it. It links to the
+              public page, which is what the separate "View my page" link used to
+              do -- the avatar and handle are a more obvious door to it than a
+              label was. */}
+          <Link
+            href={`/${profile.username}`}
+            className="group flex min-w-0 items-center gap-3"
+          >
+            <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-[var(--panel-solid)]">
+              {profile.avatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={profile.avatarUrl}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-xs font-medium text-accent">
+                  {profile.username.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </span>
+            <span className="truncate text-[15px] transition-colors group-hover:text-accent">
+              {profile.username}
+            </span>
           </Link>
+
           <div className="flex items-center gap-4">
-            <Link
-              href={`/${profile.username}`}
-              className="text-sm text-ink-faint transition-colors hover:text-ink"
-            >
-              View my page
-            </Link>
             <form
               action={async () => {
                 "use server";

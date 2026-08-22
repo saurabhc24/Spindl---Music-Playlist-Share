@@ -4,6 +4,7 @@ import { displayUrl } from "@/lib/app-url";
 import { requireProfile } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 
+import { ConnectInvite } from "./connect-invite";
 import { WelcomeMoment } from "./welcome-moment";
 
 export default async function DashboardPage(props: PageProps<"/dashboard">) {
@@ -27,10 +28,15 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
     <>
       {isNew && <WelcomeMoment displayName={name} handle={profile.username} />}
 
-      {/* Each block enters a beat after the one above it. Small enough to read
-          as the page settling rather than as an effect, and `both` on the
-          keyframe holds each one hidden through its delay instead of letting it
-          flash in first. */}
+      {connectionCount === 0 ? (
+        <div className="rise">
+          <ConnectInvite />
+        </div>
+      ) : (
+      /* Each block enters a beat after the one above it. Small enough to read
+         as the page settling rather than as an effect, and `both` on the
+         keyframe holds each one hidden through its delay instead of letting it
+         flash in first. */
       <div className="space-y-10">
         <section className="rise">
           <h1 className="heading text-3xl">
@@ -54,23 +60,8 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           <Stat label="Playlists imported" value={playlistCount} delay={120} />
           <Stat label="Shown on your page" value={visibleCount} delay={180} />
         </section>
-
-        {connectionCount === 0 && (
-          <section
-            className="rise rounded-xl border border-dashed border-[var(--line)] px-6 py-10 text-center"
-            style={{ animationDelay: "260ms" }}
-          >
-            <h2 className="heading text-xl">Connect a music service</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-ink-dim">
-              Link Spotify or YouTube to import your playlists and start building
-              your page.
-            </p>
-            <Link href="/dashboard/connections" className="btn-gold mt-6">
-              Connect a service
-            </Link>
-          </section>
-        )}
       </div>
+      )}
     </>
   );
 }

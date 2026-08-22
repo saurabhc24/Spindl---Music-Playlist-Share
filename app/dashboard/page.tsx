@@ -180,7 +180,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
         </main>
 
         <footer className="flex w-full items-center justify-center p-1">
-          <span className="wordmark text-base text-white">SpindlShare</span>
+          <span className="wordmark text-white">SpindlShare</span>
         </footer>
       </div>
     </div>

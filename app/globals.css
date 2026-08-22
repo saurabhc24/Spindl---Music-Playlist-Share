@@ -108,9 +108,15 @@ body {
     letter-spacing: -0.01em;
   }
 
+  /* Size and tracking live here rather than at each use, so the footer signature
+     is one size across the app instead of whatever each page happened to reach
+     for. The landing page set the reference; a page that genuinely needs a
+     different one overrides with a text- utility, which still wins. */
   .wordmark {
     font-family: var(--font-wordmark), system-ui, sans-serif;
     font-weight: 500;
+    font-size: 17px;
+    letter-spacing: 0.025em;
   }
 
   /* The sign-in card's backdrop, as a class, for a page that wants the same

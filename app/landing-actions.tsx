@@ -57,11 +57,10 @@ export function LandingActions({ children }: { children: ReactNode }) {
           </Link>
         </p>
 
-        {/* The frame sets the wordmark in Maxi, not the headline's Midi. */}
-        <span
-          id="landing-wordmark"
-          className="wordmark mt-3 text-[17px] tracking-wide"
-        >
+        {/* The frame sets the wordmark in Maxi, not the headline's Midi. Size
+            and tracking come from .wordmark now -- this is the size the rest of
+            the app matches, so it belongs to the class rather than to here. */}
+        <span id="landing-wordmark" className="wordmark mt-3">
           SpindlShare
         </span>
 

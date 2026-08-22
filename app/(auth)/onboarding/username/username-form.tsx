@@ -121,10 +121,14 @@ export function UsernameForm() {
         {state?.error ?? hint.text}
       </p>
 
+      {/* Same type size and height as the landing page's "Claim your link",
+          which is the button this one finishes the job of -- it reads as the
+          same promise kept rather than as a second, bigger one. Only the width
+          differs, because here it is the page's single action. */}
       <button
         type="submit"
         disabled={pending || isTaken}
-        className="btn-gold mt-8 w-full !rounded-full !py-4 !text-base"
+        className="btn-gold mt-8 w-full !rounded-full !py-3"
       >
         {pending ? "Claiming..." : "Claim your link"}
       </button>

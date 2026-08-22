@@ -58,7 +58,7 @@ export function WelcomeMoment({
       <div className="relative flex h-full flex-col items-center justify-center px-8 pb-[16.5vh] text-center">
         <div
           aria-hidden="true"
-          className="relative h-[136px] w-[136px]"
+          className="relative h-24 w-24"
           style={{
             animation: "discArrive 700ms cubic-bezier(0.22,1,0.36,1) both",
           }}
@@ -76,46 +76,44 @@ export function WelcomeMoment({
             <div
               className="absolute inset-0 rounded-full"
               style={{
-                // Grooves you can count rather than a texture, at one ring
-                // every six pixels -- about nine of them between the centre and
-                // the edge, which is what the reference shows. Much tighter and
-                // they collapse into a hatch.
+                // Fine grooves rather than countable rings: at one line every
+                // three pixels the surface reads as a record catching the light,
+                // which is what a wider spacing lost.
                 //
                 // The first colour is repeated at the end to close the loop. A
                 // conic gradient wraps back to its start, so ending on a
                 // different value leaves a hard seam running out from the centre.
-                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.18) 0 1px, transparent 1px 6px),
+                backgroundImage: `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.14) 0 1px, transparent 1px 3px),
                                   conic-gradient(from 210deg,
-                                    oklch(0.91 0.06 86),
-                                    oklch(0.85 0.07 80),
-                                    oklch(0.93 0.05 88),
-                                    oklch(0.87 0.07 82),
-                                    oklch(0.91 0.06 86))`,
-                // Two shadows: a tight one that reads as the disc catching the
-                // light, and a broad one for the halo the reference throws well
-                // past the record's own edge.
-                boxShadow:
-                  "0 0 34px oklch(0.88 0.09 84 / 0.30), 0 0 110px oklch(0.82 0.10 80 / 0.26)",
+                                    oklch(0.9 0.07 85),
+                                    oklch(0.72 0.09 70),
+                                    oklch(0.95 0.05 90),
+                                    oklch(0.8 0.09 80),
+                                    oklch(0.9 0.07 85))`,
+                boxShadow: "0 0 44px oklch(0.85 0.09 82 / 0.35)",
                 // Nine seconds a revolution. A real LP turns in under two, which
                 // at this size reads as spinning rather than as turning.
                 animation: "discSpin 9s linear infinite",
               }}
             />
           </div>
-          {/* One dark centre rather than a label with a spindle hole punched in
-              it. At this size the hole was a speck, and two rings inside each
-              other read as a target -- a single well is cleaner and is what the
-              design asks for. */}
+          {/* Label and spindle hole, so the disc reads as a record rather than
+              as a loading spinner. Sized off a real 7": the label is about a
+              third of the diameter, and much larger starts to read as an eye. */}
           <div
-            className="absolute inset-[34.5%] rounded-full"
-            style={{ background: "#000" }}
+            className="absolute inset-[33%] rounded-full"
+            style={{ background: "oklch(0.19 0.015 66)" }}
+          />
+          <div
+            className="absolute inset-[47.5%] rounded-full"
+            style={{ background: "#060504" }}
           />
         </div>
 
         <div className="mt-[88px]">
           <h2
             id="welcome-title"
-            className="heading text-[34px] font-bold leading-tight"
+            className="heading text-3xl"
             style={{
               animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 240ms both",
             }}
@@ -127,7 +125,7 @@ export function WelcomeMoment({
             {displayName}
           </h2>
           <p
-            className="mt-8 text-base text-ink"
+            className="mt-8 text-sm text-ink"
             style={{
               animation: "riseIn 620ms cubic-bezier(0.22,1,0.36,1) 420ms both",
             }}

@@ -27,9 +27,7 @@ export async function GET(
 
   if (!isProviderConfigured(provider)) {
     return NextResponse.redirect(
-      absoluteUrl(
-        `/dashboard/connections?error=not_configured&provider=${slug}`
-      )
+      absoluteUrl(`/dashboard?error=not_configured&provider=${slug}`)
     );
   }
 

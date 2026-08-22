@@ -8,8 +8,11 @@ import { PROVIDERS, parseProviderSlug } from "@/lib/providers";
 import { prisma } from "@/lib/prisma";
 import { syncProvider } from "@/lib/sync";
 
-function connectionsUrl(params: Record<string, string>) {
-  const url = new URL(absoluteUrl("/dashboard/connections"));
+// Every outcome of the round trip lands back on the connect screen, which is
+// where the invitation was accepted and the only page that explains what came
+// back. There is no separate connections page to return to any more.
+function connectResultUrl(params: Record<string, string>) {
+  const url = new URL(absoluteUrl("/dashboard"));
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
@@ -35,20 +38,20 @@ export async function GET(
   const oauthError = searchParams.get("error");
   if (oauthError) {
     return NextResponse.redirect(
-      connectionsUrl({ error: "denied", provider: slug })
+      connectResultUrl({ error: "denied", provider: slug })
     );
   }
 
   if (!(await verifyOAuthState(provider, searchParams.get("state")))) {
     return NextResponse.redirect(
-      connectionsUrl({ error: "invalid_state", provider: slug })
+      connectResultUrl({ error: "invalid_state", provider: slug })
     );
   }
 
   const code = searchParams.get("code");
   if (!code) {
     return NextResponse.redirect(
-      connectionsUrl({ error: "missing_code", provider: slug })
+      connectResultUrl({ error: "missing_code", provider: slug })
     );
   }
 
@@ -87,7 +90,7 @@ export async function GET(
   } catch (error) {
     console.error(`[connect:${slug}] token exchange failed`, error);
     return NextResponse.redirect(
-      connectionsUrl({ error: "exchange_failed", provider: slug })
+      connectResultUrl({ error: "exchange_failed", provider: slug })
     );
   }
 
@@ -104,9 +107,9 @@ export async function GET(
     // lastSyncStatus, which the connections page turns into a specific hint.
     console.error(`[connect:${slug}] first import failed`, error);
     return NextResponse.redirect(
-      connectionsUrl({ connected: slug, error: "import_failed", provider: slug })
+      connectResultUrl({ connected: slug, error: "import_failed", provider: slug })
     );
   }
 
-  return NextResponse.redirect(connectionsUrl({ connected: slug }));
+  return NextResponse.redirect(connectResultUrl({ connected: slug }));
 }

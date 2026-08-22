@@ -72,8 +72,7 @@ app/landing-actions.tsx           the sign-in card, and the links that open it
 app/[username]/                   public profile page + OG image
 app/(auth)/layout.tsx             one backdrop for all three auth screens
 app/(auth)/                       login, magic-link verify, username onboarding
-app/dashboard/                    connections, playlist curation, settings
-app/dashboard/welcome-moment.tsx  the greeting a new account gets, once
+app/dashboard/page.tsx            the connect-a-service screen a new account lands on
 app/(legal)/                      privacy policy and terms
 app/admin/                        moderation and site overview
 app/api/connect/                  OAuth start + callback (per provider)
@@ -340,6 +339,15 @@ region, and which rate-limit backend is live.
 
 ## Not built yet
 
+- **The rest of the signed-in UI.** Every page under `/dashboard` was removed to
+  be redesigned from scratch, and only the connect screen has been rebuilt so far
+  — there is no playlists, connections or settings screen behind it yet. The
+  server actions were kept, so the write path (add and remove a link, rename,
+  edit profile) is waiting on screens rather than needing to be rebuilt with
+  them. `/dashboard` shows the connect screen unconditionally for now, including
+  to someone who has already connected a service.
+- **Somewhere for the paste-a-link control to go.** The connect screen draws it,
+  because the design does, but it leads nowhere until that flow is designed.
 - **Avatar upload.** Avatars are taken from the login provider;
   `BLOB_READ_WRITE_TOKEN` is reserved for uploading your own.
 - **Themes.** `Profile.theme` exists in the schema with no UI behind it.
